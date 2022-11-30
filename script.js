@@ -1,13 +1,14 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// canvas.width = window.innerWidth;
-// canvas.height = window.innerHeight;
-canvas.width = '500';
-canvas.height = '700';
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+// canvas.width = '500';
+// canvas.height = '700';
 
 const FRAMERATE = 30;
 const SHIP_HEIGHT_PX = 30;
+const NUM_STARS = 10;
 
 // Draw scene framerate times per second
 setInterval(updateCanvas, 1000 / FRAMERATE);
@@ -24,11 +25,11 @@ let playerShip = {
 };
 
 function updateCanvas() {
-	// Draw Background: "space"
+	// ==Draw Background: "space"==
 	ctx.fillStyle = 'black';
 	ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
-	// Draw Player Ship: (triangle)
+	// ==Draw Player Ship: (triangle)==
 	ctx.strokeStyle = 'white';
 	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
 	ctx.beginPath();
@@ -70,6 +71,21 @@ function updateCanvas() {
 	ctx.fillStyle = 'red';
 	ctx.fillRect(playerShip.location.x - 1, playerShip.location.y - 1, 2, 2);
 }
+
+function populateStars() {
+	ctx.fillStyle = 'white';
+
+	for (let i = 0; i < NUM_STARS; i++) {
+		ctx.fillRect(
+			Math.floor(Math.random() * canvas.width - 1),
+			Math.floor(Math.random() * canvas.height - 1),
+			2,
+			2
+		);
+	}
+}
+populateStars();
+
 console.log(playerShip.location.x);
 
 window.addEventListener('resize', resizeCanvas, false);
