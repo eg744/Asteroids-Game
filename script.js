@@ -1,20 +1,28 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+let screenCoordX = window.innerWidth;
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 // canvas.width = '500';
 // canvas.height = '700';
 
+// ==Globals==
 const FRAMERATE = 60;
+const FRICTION = 0.7;
 const SHIP_HEIGHT_PX = 30;
 const NUM_STARS = 10;
 // Deg/sec
 const SHIP_TURN_SPEED = 360;
+// Acceleration per second
+const SHIP_THRUST_SPEED_PX = 5;
+const SHIP_MAX_THRUST_SPEED = 10;
 
 // Draw scene framerate times per second. (use requestanimationframe)
 // setInterval(updateCanvas, 1000 / FRAMERATE);
 
+// ==Objects==
 let playerShip = {
 	radius: SHIP_HEIGHT_PX / 2,
 
@@ -82,6 +90,38 @@ function updateCanvas() {
 	playerShip.position.angle += playerShip.position.rotation;
 
 	// Ship thrust
+	if (playerShip.shipThrusting) {
+		// Accelerate along cos (X of ship's angle)
+		playerShip.thrust.x +=
+			(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
+			FRAMERATE;
+		// Sin (Y)
+		playerShip.thrust.y -=
+			(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
+			FRAMERATE;
+	} else {
+		// Apply friction to ship if not accelerating
+		playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
+		playerShip.thrust.y -= (FRICTION * playerShip.thrust.y) / FRAMERATE;
+	}
+
+	// Move on canvas
+	playerShip.position.x += playerShip.thrust.x;
+	playerShip.position.y += playerShip.thrust.y;
+
+	// Keep player on screen, loops back into view.
+	// X
+	if (playerShip.position.x < 0 - playerShip.radius) {
+		playerShip.position.x = canvas.width + playerShip.radius;
+	} else if (playerShip.position.x > canvas.width + playerShip.radius) {
+		playerShip.position.x = 0 - playerShip.radius;
+	}
+	// Y
+	if (playerShip.position.y < 0 - playerShip.radius) {
+		playerShip.position.y = canvas.height + playerShip.radius;
+	} else if (playerShip.position.y > canvas.height + playerShip.radius) {
+		playerShip.position.y = 0 - playerShip.radius;
+	}
 
 	// dot
 	ctx.fillStyle = 'red';
@@ -151,6 +191,9 @@ function keyDownAction(event) {
 				((-SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
 
 			break;
+		// Brake
+		case 40:
+			break;
 	}
 }
 
@@ -162,6 +205,12 @@ function keyUpAction(event) {
 			break;
 		case 38:
 			playerShip.shipThrusting = false;
+			playerShip.thrust.x +=
+				(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
+				FRAMERATE;
+			playerShip.thrust.y +=
+				(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
+				FRAMERATE;
 
 			break;
 		case 39:
