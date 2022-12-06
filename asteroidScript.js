@@ -99,6 +99,45 @@ function updateCanvas() {
 		playerShip.thrust.y -=
 			(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
 			FRAMERATE;
+
+		// Draw thrust
+		ctx.strokeStyle = 'yellow';
+		ctx.fillRect = 'orange';
+		ctx.lineWidth = SHIP_HEIGHT_PX / 10;
+		ctx.beginPath();
+		ctx.moveTo(
+			playerShip.position.x -
+				playerShip.radius *
+					((2 / 3) * Math.cos(playerShip.position.angle) +
+						Math.sin(playerShip.position.angle)),
+
+			playerShip.position.y +
+				playerShip.radius *
+					((2 / 3) * Math.sin(playerShip.position.angle) +
+						Math.cos(playerShip.position.angle))
+		);
+		// Rear left
+		ctx.lineTo(
+			playerShip.position.x -
+				playerShip.radius *
+					(Math.cos(playerShip.position.angle) +
+						Math.sin(playerShip.position.angle)),
+			playerShip.position.y +
+				playerShip.radius *
+					(Math.sin(playerShip.position.angle) -
+						Math.cos(playerShip.position.angle))
+		);
+		// Rear right
+		ctx.lineTo(
+			playerShip.position.x -
+				playerShip.radius *
+					(Math.cos(playerShip.position.angle) -
+						Math.sin(playerShip.position.angle)),
+			playerShip.position.y +
+				playerShip.radius *
+					(Math.sin(playerShip.position.angle) +
+						Math.cos(playerShip.position.angle))
+		);
 	} else {
 		// Apply friction to ship if not accelerating
 		playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
@@ -145,6 +184,11 @@ function populateStars() {
 		);
 	}
 }
+
+function drawThrust() {
+	if (playerShip.shipThrusting) {
+	}
+}
 populateStars();
 
 console.log(playerShip.position.x);
@@ -159,9 +203,16 @@ function debounce(func, timeout = 300) {
 	};
 }
 
+function setObjectsOnResize() {
+	playerShip.position.x = canvas.width / 2;
+	playerShip.position.y = canvas.height / 2;
+}
+
 function resizeCanvas() {
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
+
+	setObjectsOnResize();
 	updateCanvas();
 }
 
