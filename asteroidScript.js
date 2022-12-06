@@ -16,8 +16,8 @@ const NUM_STARS = 10;
 // Deg/sec
 const SHIP_TURN_SPEED = 360;
 // Acceleration per second
-const SHIP_THRUST_SPEED_PX = 5;
-const SHIP_MAX_THRUST_SPEED = 10;
+const SHIP_THRUST_SPEED_PX = 1;
+const SHIP_MAX_THRUST_SPEED = 7;
 
 // Draw scene framerate times per second. (use requestanimationframe)
 // setInterval(updateCanvas, 1000 / FRAMERATE);
@@ -89,7 +89,7 @@ function updateCanvas() {
 	// Rotate
 	playerShip.position.angle += playerShip.position.rotation;
 
-	// Ship thrust
+	// Ship thrust state
 	if (playerShip.shipThrusting) {
 		// Accelerate along cos (X of ship's angle)
 		playerShip.thrust.x +=
@@ -99,6 +99,65 @@ function updateCanvas() {
 		playerShip.thrust.y -=
 			(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
 			FRAMERATE;
+
+		// ==Draw thrust==
+
+		// ==========
+		ctx.strokeStyle = 'yellow';
+		ctx.fillStyle = 'orange';
+		ctx.lineWidth = SHIP_HEIGHT_PX / 10;
+		ctx.beginPath();
+
+		// copy
+		// 	playerShip.position.x -
+		// 		playerShip.radius *
+		// 			((2 / 3) * Math.cos(playerShip.position.angle) +
+		// 				0.5 * Math.sin(playerShip.position.angle)),
+		// 	playerShip.position.y +
+		// 		playerShip.radius *
+		// 			((2 / 3) * Math.sin(playerShip.position.angle) -
+		// 				0.5 * Math.cos(playerShip.position.angle))
+		// );
+
+		// left line thrust ok
+
+		ctx.moveTo(
+			playerShip.position.x -
+				playerShip.radius *
+					((2 / 3) * Math.cos(playerShip.position.angle) +
+						0.5 * Math.sin(playerShip.position.angle)),
+
+			playerShip.position.y +
+				playerShip.radius *
+					((2 / 3) * Math.sin(playerShip.position.angle) -
+						0.5 * Math.cos(playerShip.position.angle))
+		);
+		// center line thrust
+		ctx.lineTo(
+			playerShip.position.x -
+				playerShip.radius *
+					(5 / 3) *
+					Math.cos(playerShip.position.angle),
+			playerShip.position.y +
+				playerShip.radius *
+					(5 / 3) *
+					Math.sin(playerShip.position.angle)
+		);
+		// right line thrust
+		ctx.lineTo(
+			playerShip.position.x -
+				playerShip.radius *
+					((2 / 3) * Math.cos(playerShip.position.angle) -
+						0.5 * Math.sin(playerShip.position.angle)),
+
+			playerShip.position.y +
+				playerShip.radius *
+					((2 / 3) * Math.sin(playerShip.position.angle) +
+						0.5 * Math.cos(playerShip.position.angle))
+		);
+		// ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
 	} else {
 		// Apply friction to ship if not accelerating
 		playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
@@ -124,7 +183,7 @@ function updateCanvas() {
 	}
 
 	// dot
-	ctx.fillStyle = 'red';
+	ctx.fillStyle = 'white';
 	ctx.fillRect(playerShip.position.x - 1, playerShip.position.y - 1, 2, 2);
 
 	// Animate recursively
@@ -145,6 +204,11 @@ function populateStars() {
 		);
 	}
 }
+
+function drawThrust() {
+	if (playerShip.shipThrusting) {
+	}
+}
 populateStars();
 
 console.log(playerShip.position.x);
@@ -159,9 +223,16 @@ function debounce(func, timeout = 300) {
 	};
 }
 
+function setObjectsOnResize() {
+	playerShip.position.x = canvas.width / 2;
+	playerShip.position.y = canvas.height / 2;
+}
+
 function resizeCanvas() {
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
+
+	setObjectsOnResize();
 	updateCanvas();
 }
 
