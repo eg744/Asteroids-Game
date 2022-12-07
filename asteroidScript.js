@@ -10,14 +10,18 @@ canvas.height = window.innerHeight;
 
 // ==Globals==
 const FRAMERATE = 60;
+// Slow object speed: 1 = base speed
 const FRICTION = 0.7;
 const SHIP_HEIGHT_PX = 30;
-const NUM_STARS = 10;
 // Deg/sec
 const SHIP_TURN_SPEED = 360;
 // Acceleration per second
 const SHIP_THRUST_SPEED_PX = 1;
 const SHIP_MAX_THRUST_SPEED = 7;
+// Default asteroid
+const ASTEROIDS_NUMBER = 3;
+
+const NUM_STARS = 10;
 
 // Draw scene framerate times per second. (use requestanimationframe)
 // setInterval(updateCanvas, 1000 / FRAMERATE);
@@ -25,6 +29,9 @@ const SHIP_MAX_THRUST_SPEED = 7;
 // ==Objects==
 let playerShip = {
 	radius: SHIP_HEIGHT_PX / 2,
+	isAlive: true,
+	lives: 3,
+	isShooting: false,
 
 	position: {
 		// Center of canvas by default
@@ -42,6 +49,37 @@ let playerShip = {
 		y: 0,
 	},
 };
+
+// Asteroids
+let asteroids = [];
+createAsteroids();
+
+function createAsteroids() {
+	asteroids = [];
+	asteroids.forEach(() => {
+		asteroids.push(createNewAsteroid(1, 2));
+	});
+}
+
+function createNewAsteroid(x, y) {
+	let asteroid = {
+		radius: ASTEROIDS_SIZE / 2,
+		position: {
+			x: x,
+			y: y,
+			// Velocities applied to each asteroid: if random value > 1, velocity applied to positive direction else negative direction
+			xVelocity:
+				((Math.random() * ASTEROID_SPEED) / FRAMERATE) *
+				(Math.random() < 0.5 ? 1 : -1),
+			yVelocity:
+				((Math.random() * ASTEROID_SPEED) / FRAMERATE) *
+				(Math.random() < 0.5 ? 1 : -1),
+			// Radian heading
+			angle: Math.random() * Math.PI * 2,
+		},
+	};
+	return asteroid;
+}
 
 function updateCanvas() {
 	// ==Draw Background: "space"==
@@ -108,18 +146,7 @@ function updateCanvas() {
 		ctx.lineWidth = SHIP_HEIGHT_PX / 10;
 		ctx.beginPath();
 
-		// copy
-		// 	playerShip.position.x -
-		// 		playerShip.radius *
-		// 			((2 / 3) * Math.cos(playerShip.position.angle) +
-		// 				0.5 * Math.sin(playerShip.position.angle)),
-		// 	playerShip.position.y +
-		// 		playerShip.radius *
-		// 			((2 / 3) * Math.sin(playerShip.position.angle) -
-		// 				0.5 * Math.cos(playerShip.position.angle))
-		// );
-
-		// left line thrust ok
+		// left line thrust
 
 		ctx.moveTo(
 			playerShip.position.x -
@@ -155,6 +182,7 @@ function updateCanvas() {
 					((2 / 3) * Math.sin(playerShip.position.angle) +
 						0.5 * Math.cos(playerShip.position.angle))
 		);
+		// closepath if i want a triangle, looks fine without for thruster.
 		// ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
