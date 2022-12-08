@@ -10,14 +10,25 @@ canvas.height = window.innerHeight;
 
 // ==Globals==
 const FRAMERATE = 60;
+// Slow object speed: 1 = base speed
 const FRICTION = 0.7;
 const SHIP_HEIGHT_PX = 30;
-const NUM_STARS = 10;
 // Deg/sec
 const SHIP_TURN_SPEED = 360;
 // Acceleration per second
 const SHIP_THRUST_SPEED_PX = 1;
 const SHIP_MAX_THRUST_SPEED = 7;
+
+// Default asteroid
+const ASTEROIDS_NUMBER = 3;
+const ASTEROIDS_SIZE = 100;
+// Avg vertices for each asteroid
+const ASTEROIDS_VERTEX = 10;
+// Max acceleration per second
+const ASTEROID_SPEED_PX = 20;
+
+// Background stars
+const NUM_STARS = 10;
 
 // Draw scene framerate times per second. (use requestanimationframe)
 // setInterval(updateCanvas, 1000 / FRAMERATE);
@@ -25,6 +36,9 @@ const SHIP_MAX_THRUST_SPEED = 7;
 // ==Objects==
 let playerShip = {
 	radius: SHIP_HEIGHT_PX / 2,
+	isAlive: true,
+	lives: 3,
+	isShooting: false,
 
 	position: {
 		// Center of canvas by default
@@ -42,6 +56,45 @@ let playerShip = {
 		y: 0,
 	},
 };
+
+// ==Asteroids==
+let currentAsteroids = [];
+
+function createNewAsteroid(x, y) {
+	let asteroid = {
+		radius: ASTEROIDS_SIZE / 2,
+		position: {
+			x: x,
+			y: y,
+			// Velocities applied to each asteroid: if random value > .5, velocity applied to positive direction else negative direction
+			xVelocity:
+				((Math.random() * ASTEROID_SPEED_PX) / FRAMERATE) *
+				(Math.random() < 0.5 ? 1 : -1),
+			yVelocity:
+				((Math.random() * ASTEROID_SPEED_PX) / FRAMERATE) *
+				(Math.random() < 0.5 ? 1 : -1),
+			// Radian heading
+			angle: Math.random() * Math.PI * 2,
+			vertex: Math.floor(
+				Math.random() * (ASTEROIDS_VERTEX + 1) + ASTEROIDS_VERTEX / 2
+			),
+		},
+	};
+	return asteroid;
+}
+
+function createAsteroidsArray() {
+	// Empty
+	currentAsteroids = [];
+	for (let i = 0; i < ASTEROIDS_NUMBER; i++) {
+		let x = Math.floor(Math.random() * canvas.width);
+		let y = Math.floor(Math.random() * canvas.height);
+
+		currentAsteroids.push(createNewAsteroid(x, y));
+	}
+}
+
+createAsteroidsArray();
 
 function updateCanvas() {
 	// ==Draw Background: "space"==
@@ -101,26 +154,12 @@ function updateCanvas() {
 			FRAMERATE;
 
 		// ==Draw thrust==
-
-		// ==========
 		ctx.strokeStyle = 'yellow';
 		ctx.fillStyle = 'orange';
 		ctx.lineWidth = SHIP_HEIGHT_PX / 10;
 		ctx.beginPath();
 
-		// copy
-		// 	playerShip.position.x -
-		// 		playerShip.radius *
-		// 			((2 / 3) * Math.cos(playerShip.position.angle) +
-		// 				0.5 * Math.sin(playerShip.position.angle)),
-		// 	playerShip.position.y +
-		// 		playerShip.radius *
-		// 			((2 / 3) * Math.sin(playerShip.position.angle) -
-		// 				0.5 * Math.cos(playerShip.position.angle))
-		// );
-
-		// left line thrust ok
-
+		// left line thrust
 		ctx.moveTo(
 			playerShip.position.x -
 				playerShip.radius *
@@ -155,6 +194,7 @@ function updateCanvas() {
 					((2 / 3) * Math.sin(playerShip.position.angle) +
 						0.5 * Math.cos(playerShip.position.angle))
 		);
+		// closepath if i want a triangle, looks fine without for thruster.
 		// ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
@@ -182,9 +222,22 @@ function updateCanvas() {
 		playerShip.position.y = 0 - playerShip.radius;
 	}
 
-	// dot
+	// dot cockpit
 	ctx.fillStyle = 'white';
 	ctx.fillRect(playerShip.position.x - 1, playerShip.position.y - 1, 2, 2);
+
+	// ==Draw asteroids==
+	ctx.strokeStyle = 'slategrey';
+	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+	currentAsteroids.forEach((asteroid) => {
+		// let asteroidPosX =
+		// Path
+		// ctx.beginPath();
+		// ctx.moveTo();
+		// Polygon
+		// Asteroid
+		// Edge detection
+	});
 
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
@@ -205,10 +258,6 @@ function populateStars() {
 	}
 }
 
-function drawThrust() {
-	if (playerShip.shipThrusting) {
-	}
-}
 populateStars();
 
 console.log(playerShip.position.x);
@@ -244,7 +293,7 @@ document.addEventListener('keyup', keyUpAction);
 
 // Moving, rotating ship
 function keyDownAction(event) {
-	console.log(event.keyCode);
+	console.log(event);
 	switch (event.keyCode) {
 		// Rotate left
 		case 37:
