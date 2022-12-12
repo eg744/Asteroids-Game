@@ -12,18 +12,20 @@ canvas.height = window.innerHeight;
 const FRAMERATE = 60;
 // Slow object speed: 1 = base speed
 const FRICTION = 0.7;
+
+// Default player ship values
 const SHIP_HEIGHT_PX = 30;
 // Deg/sec
-const SHIP_TURN_SPEED = 360;
+const SHIP_TURN_SPEED = 180;
 // Acceleration per second
 const SHIP_THRUST_SPEED_PX = 1;
 const SHIP_MAX_THRUST_SPEED = 7;
 
-// Default asteroid
-const ASTEROIDS_NUMBER = 3;
-const ASTEROIDS_SIZE = 100;
-// Avg vertices for each asteroid
-const ASTEROIDS_VERTEX = 10;
+// Default asteroid values
+const ASTEROIDS_NUMBER = 5;
+const ASTEROIDS_SIZE_PX = 100;
+const ASTEROID_SHAPE_VARIATION = 0.5;
+const ASTEROIDS_VERTEX_AVG = 10;
 // Max acceleration per second
 const ASTEROID_SPEED_PX = 20;
 
@@ -58,11 +60,18 @@ let playerShip = {
 };
 
 // ==Asteroids==
-let currentAsteroids = [];
+let currentAsteroidsArray = [];
 
 function createNewAsteroid(x, y) {
 	let asteroid = {
-		radius: ASTEROIDS_SIZE / 2,
+		radius: ASTEROIDS_SIZE_PX / 2,
+		// Each vertex 1 radius from center point
+		vertices: Math.floor(
+			Math.random() * (ASTEROIDS_VERTEX_AVG + 1) +
+				ASTEROIDS_VERTEX_AVG / 2
+		),
+		// Add variation to vertices
+		offset: [],
 		position: {
 			x: x,
 			y: y,
@@ -75,26 +84,51 @@ function createNewAsteroid(x, y) {
 				(Math.random() < 0.5 ? 1 : -1),
 			// Radian heading
 			angle: Math.random() * Math.PI * 2,
-			vertex: Math.floor(
-				Math.random() * (ASTEROIDS_VERTEX + 1) + ASTEROIDS_VERTEX / 2
-			),
 		},
 	};
+	// Vertex offsets: random multiplier to radius (between default and 2 * radius)
+	for (let i = 0; i < asteroid.vertices; i++) {
+		asteroid.offset.push(
+			Math.random() * ASTEROID_SHAPE_VARIATION * 2 +
+				1 -
+				ASTEROID_SHAPE_VARIATION
+		);
+	}
 	return asteroid;
+}
+
+function asteroidDistanceAllowed(shipX, shipY, asteroidX, asteroidY) {
+	// Square root of square of distance between the player and generated asteroids
+	return Math.sqrt(
+		Math.pow(asteroidX - shipX, 2) + Math.pow(asteroidY - shipY, 2)
+	);
 }
 
 function createAsteroidsArray() {
 	// Empty
-	currentAsteroids = [];
+	currentAsteroidsArray = [];
+	let asteroidX, asteroidY;
 	for (let i = 0; i < ASTEROIDS_NUMBER; i++) {
-		let x = Math.floor(Math.random() * canvas.width);
-		let y = Math.floor(Math.random() * canvas.height);
+		// Generate asteroids within allowed space around player
+		do {
+			asteroidX = Math.floor(Math.random() * canvas.width);
+			asteroidY = Math.floor(Math.random() * canvas.height);
+		} while (
+			asteroidDistanceAllowed(
+				playerShip.position.x,
+				playerShip.position.y,
+				asteroidX,
+				asteroidY
+			) <
+			ASTEROIDS_SIZE_PX * 2 + playerShip.radius
+		);
 
-		currentAsteroids.push(createNewAsteroid(x, y));
+		currentAsteroidsArray.push(createNewAsteroid(asteroidX, asteroidY));
 	}
 }
 
 createAsteroidsArray();
+console.log(currentAsteroidsArray);
 
 function updateCanvas() {
 	// ==Draw Background: "space"==
@@ -229,14 +263,62 @@ function updateCanvas() {
 	// ==Draw asteroids==
 	ctx.strokeStyle = 'slategrey';
 	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
-	currentAsteroids.forEach((asteroid) => {
-		// let asteroidPosX =
+	currentAsteroidsArray.forEach((asteroid) => {
 		// Path
-		// ctx.beginPath();
-		// ctx.moveTo();
-		// Polygon
-		// Asteroid
-		// Edge detection
+		ctx.beginPath();
+		// Center of asteroid
+
+		ctx.moveTo(
+			asteroid.position.x +
+				asteroid.radius *
+					asteroid.offset[0] *
+					Math.cos(asteroid.position.angle),
+			asteroid.position.y +
+				asteroid.radius *
+					asteroid.offset[0] *
+					Math.sin(asteroid.position.angle)
+		);
+		// Draw Polygon: number of vertices
+		for (let i = 1; i < asteroid.vertices; i++) {
+			// Line to each corner of polygon
+			ctx.lineTo(
+				asteroid.position.x +
+					asteroid.radius *
+						asteroid.offset[i] *
+						Math.cos(
+							asteroid.position.angle +
+								// Modified for degrees in each angle
+								(i * Math.PI * 2) / asteroid.vertices
+						),
+				asteroid.position.y +
+					asteroid.radius *
+						asteroid.offset[i] *
+						Math.sin(
+							asteroid.position.angle +
+								(i * Math.PI * 2) / asteroid.vertices
+						)
+			);
+		}
+		ctx.closePath();
+		ctx.stroke();
+
+		// Asteroid movement
+
+		asteroid.position.x += asteroid.position.xVelocity;
+		asteroid.position.y += asteroid.position.yVelocity;
+
+		// Edge detection, loop on other side
+		if (asteroid.position.x < 0 - asteroid.radius) {
+			asteroid.position.x = canvas.width + asteroid.radius;
+		} else if (asteroid.position.x > canvas.width + asteroid.radius) {
+			asteroid.position.x = 0 - asteroid.radius;
+		}
+
+		if (asteroid.position.y < 0 - asteroid.radius) {
+			asteroid.position.y = canvas.height + asteroid.radius;
+		} else if (asteroid.position.y > canvas.height + asteroid.radius) {
+			asteroid.position.y = 0 - asteroid.radius;
+		}
 	});
 
 	// Animate recursively
@@ -295,6 +377,10 @@ document.addEventListener('keyup', keyUpAction);
 function keyDownAction(event) {
 	console.log(event);
 	switch (event.keyCode) {
+		// Space: shoot
+		case 32:
+			isShooting = true;
+			break;
 		// Rotate left
 		case 37:
 			playerShip.position.rotation =
@@ -320,6 +406,9 @@ function keyDownAction(event) {
 function keyUpAction(event) {
 	// Stop actions
 	switch (event.keyCode) {
+		case 32:
+			isShooting = false;
+			break;
 		case 37:
 			playerShip.position.rotation = 0;
 			break;
