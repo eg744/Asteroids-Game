@@ -20,6 +20,7 @@ const SHIP_TURN_SPEED = 180;
 // Acceleration per second
 const SHIP_THRUST_SPEED_PX = 1;
 const SHIP_MAX_THRUST_SPEED = 7;
+const SHIP_DEATH_TIME = 0.3;
 
 // Default asteroid values
 const ASTEROIDS_NUMBER = 5;
@@ -41,7 +42,8 @@ const NUM_STARS = 10;
 let playerShip = {
 	radius: SHIP_HEIGHT_PX / 2,
 	isAlive: true,
-	lives: 3,
+	lives: 33,
+	deathTimer: 0,
 	isShooting: false,
 
 	position: {
@@ -60,6 +62,14 @@ let playerShip = {
 		y: 0,
 	},
 };
+
+function updateShipDeathState() {
+	playerShip.deathTimer = Math.ceil(SHIP_DEATH_TIME * FRAMERATE);
+}
+function applyShipFriction() {
+	playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
+	playerShip.thrust.y -= (FRICTION * playerShip.thrust.y) / FRAMERATE;
+}
 
 // ==Asteroids==
 let currentAsteroidsArray = [];
@@ -133,49 +143,115 @@ createAsteroidsArray();
 console.log(currentAsteroidsArray);
 
 function updateCanvas() {
+	let playerLoseState = playerShip.deathTimer > 0;
+
 	// ==Draw Background: "space"==
 	ctx.fillStyle = 'black';
 	ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
-	// ==Draw Player Ship: (triangle)==
-	ctx.strokeStyle = 'white';
-	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
-	ctx.beginPath();
+	// ==Draw Player Ship: (triangle) while player alive==
+	if (!playerLoseState) {
+		ctx.strokeStyle = 'white';
+		ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+		ctx.beginPath();
 
-	// Head
-	ctx.moveTo(
-		playerShip.position.x +
-			playerShip.radius * Math.cos(playerShip.position.angle),
-		playerShip.position.y -
-			playerShip.radius * Math.sin(playerShip.position.angle)
-	);
-	// Rear left
-	ctx.lineTo(
-		playerShip.position.x -
-			playerShip.radius *
-				(Math.cos(playerShip.position.angle) +
-					Math.sin(playerShip.position.angle)),
-		playerShip.position.y +
-			playerShip.radius *
-				(Math.sin(playerShip.position.angle) -
-					Math.cos(playerShip.position.angle))
-	);
-	// Rear right
-	ctx.lineTo(
-		playerShip.position.x -
-			playerShip.radius *
-				(Math.cos(playerShip.position.angle) -
-					Math.sin(playerShip.position.angle)),
-		playerShip.position.y +
-			playerShip.radius *
-				(Math.sin(playerShip.position.angle) +
-					Math.cos(playerShip.position.angle))
-	);
-	ctx.closePath();
-	ctx.stroke();
+		// Head
+		ctx.moveTo(
+			playerShip.position.x +
+				playerShip.radius * Math.cos(playerShip.position.angle),
+			playerShip.position.y -
+				playerShip.radius * Math.sin(playerShip.position.angle)
+		);
+		// Rear left
+		ctx.lineTo(
+			playerShip.position.x -
+				playerShip.radius *
+					(Math.cos(playerShip.position.angle) +
+						Math.sin(playerShip.position.angle)),
+			playerShip.position.y +
+				playerShip.radius *
+					(Math.sin(playerShip.position.angle) -
+						Math.cos(playerShip.position.angle))
+		);
+		// Rear right
+		ctx.lineTo(
+			playerShip.position.x -
+				playerShip.radius *
+					(Math.cos(playerShip.position.angle) -
+						Math.sin(playerShip.position.angle)),
+			playerShip.position.y +
+				playerShip.radius *
+					(Math.sin(playerShip.position.angle) +
+						Math.cos(playerShip.position.angle))
+		);
+		ctx.closePath();
+		ctx.stroke();
+
+		// dot cockpit
+		ctx.fillStyle = 'white';
+		ctx.fillRect(
+			playerShip.position.x - 1,
+			playerShip.position.y - 1,
+			2,
+			2
+		);
+	} else {
+		// Loss state graphic
+		ctx.fillStyle = 'red';
+		ctx.beginPath();
+		ctx.arc(
+			playerShip.position.x,
+			playerShip.position.y,
+			playerShip.radius * 1.7,
+			0,
+			2 * Math.PI,
+			false
+		);
+		ctx.fill();
+
+		ctx.fillStyle = 'orange';
+		ctx.beginPath();
+		ctx.arc(
+			playerShip.position.x,
+			playerShip.position.y,
+			playerShip.radius * 1.4,
+			0,
+			2 * Math.PI,
+			false
+		);
+		ctx.fill();
+
+		ctx.fillStyle = 'orange';
+		ctx.beginPath();
+		ctx.arc(
+			playerShip.position.x,
+			playerShip.position.y,
+			playerShip.radius * 1,
+			0,
+			2 * Math.PI,
+			false
+		);
+		ctx.fill();
+
+		ctx.stroke();
+	}
 
 	// Check game state: is player colliding with asteroid
-	// if(asteroidDistanceAllowed())
+	if (!playerLoseState) {
+		currentAsteroidsArray.forEach((asteroid) => {
+			if (
+				asteroidDistanceAllowed(
+					playerShip.position.x,
+					playerShip.position.y,
+					asteroid.position.x,
+					asteroid.position.y
+				) <
+				playerShip.radius + asteroid.radius
+			) {
+				updateShipDeathState();
+			}
+		});
+	}
 
 	if (SHOW_COLLISION) {
 		ctx.strokeStyle = 'green';
@@ -191,69 +267,73 @@ function updateCanvas() {
 		ctx.stroke();
 	}
 
-	// Rotate ship
-	playerShip.position.angle += playerShip.position.rotation;
+	if (!playerLoseState) {
+		// Rotate ship
+		playerShip.position.angle += playerShip.position.rotation;
 
-	// Ship thrust state
-	if (playerShip.shipThrusting) {
-		// Accelerate along cos (X of ship's angle)
-		playerShip.thrust.x +=
-			(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
-			FRAMERATE;
-		// Sin (Y)
-		playerShip.thrust.y -=
-			(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
-			FRAMERATE;
+		// Ship thrust state
+		if (playerShip.shipThrusting) {
+			// Accelerate along cos (X of ship's angle)
+			playerShip.thrust.x +=
+				(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
+				FRAMERATE;
+			// Sin (Y)
+			playerShip.thrust.y -=
+				(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
+				FRAMERATE;
 
-		// ==Draw thrust==
-		ctx.strokeStyle = 'yellow';
-		ctx.fillStyle = 'orange';
-		ctx.lineWidth = SHIP_HEIGHT_PX / 10;
-		ctx.beginPath();
+			// ==Draw thrust==
 
-		// left line thrust
-		ctx.moveTo(
-			playerShip.position.x -
-				playerShip.radius *
-					((2 / 3) * Math.cos(playerShip.position.angle) +
-						0.5 * Math.sin(playerShip.position.angle)),
+			ctx.strokeStyle = 'yellow';
+			ctx.fillStyle = 'orange';
+			ctx.lineWidth = SHIP_HEIGHT_PX / 10;
+			ctx.beginPath();
 
-			playerShip.position.y +
-				playerShip.radius *
-					((2 / 3) * Math.sin(playerShip.position.angle) -
-						0.5 * Math.cos(playerShip.position.angle))
-		);
-		// center line thrust
-		ctx.lineTo(
-			playerShip.position.x -
-				playerShip.radius *
-					(5 / 3) *
-					Math.cos(playerShip.position.angle),
-			playerShip.position.y +
-				playerShip.radius *
-					(5 / 3) *
-					Math.sin(playerShip.position.angle)
-		);
-		// right line thrust
-		ctx.lineTo(
-			playerShip.position.x -
-				playerShip.radius *
-					((2 / 3) * Math.cos(playerShip.position.angle) -
-						0.5 * Math.sin(playerShip.position.angle)),
+			// left line thrust
+			ctx.moveTo(
+				playerShip.position.x -
+					playerShip.radius *
+						((2 / 3) * Math.cos(playerShip.position.angle) +
+							0.5 * Math.sin(playerShip.position.angle)),
 
-			playerShip.position.y +
-				playerShip.radius *
-					((2 / 3) * Math.sin(playerShip.position.angle) +
-						0.5 * Math.cos(playerShip.position.angle))
-		);
-		// closepath if i want a triangle, looks fine without for thruster.
-		// ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
+				playerShip.position.y +
+					playerShip.radius *
+						((2 / 3) * Math.sin(playerShip.position.angle) -
+							0.5 * Math.cos(playerShip.position.angle))
+			);
+			// center line thrust
+			ctx.lineTo(
+				playerShip.position.x -
+					playerShip.radius *
+						(5 / 3) *
+						Math.cos(playerShip.position.angle),
+				playerShip.position.y +
+					playerShip.radius *
+						(5 / 3) *
+						Math.sin(playerShip.position.angle)
+			);
+			// right line thrust
+			ctx.lineTo(
+				playerShip.position.x -
+					playerShip.radius *
+						((2 / 3) * Math.cos(playerShip.position.angle) -
+							0.5 * Math.sin(playerShip.position.angle)),
+
+				playerShip.position.y +
+					playerShip.radius *
+						((2 / 3) * Math.sin(playerShip.position.angle) +
+							0.5 * Math.cos(playerShip.position.angle))
+			);
+			// closepath if i want a triangle, looks fine without for thruster.
+			// ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			// Apply friction to ship if not accelerating
+			applyShipFriction();
+		}
 	} else {
-		// Apply friction to ship if not accelerating
-		playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
-		playerShip.thrust.y -= (FRICTION * playerShip.thrust.y) / FRAMERATE;
+		applyShipFriction();
 	}
 
 	// Move on canvas
@@ -273,10 +353,6 @@ function updateCanvas() {
 	} else if (playerShip.position.y > canvas.height + playerShip.radius) {
 		playerShip.position.y = 0 - playerShip.radius;
 	}
-
-	// dot cockpit
-	ctx.fillStyle = 'white';
-	ctx.fillRect(playerShip.position.x - 1, playerShip.position.y - 1, 2, 2);
 
 	// ==Draw asteroids==
 	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
