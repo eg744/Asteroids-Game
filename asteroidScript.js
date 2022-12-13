@@ -29,6 +29,8 @@ const ASTEROIDS_VERTEX_AVG = 10;
 // Max acceleration per second
 const ASTEROID_SPEED_PX = 20;
 
+const SHOW_COLLISION = true;
+
 // Background stars
 const NUM_STARS = 10;
 
@@ -169,11 +171,27 @@ function updateCanvas() {
 				(Math.sin(playerShip.position.angle) +
 					Math.cos(playerShip.position.angle))
 	);
-	// Hypoteneuse
 	ctx.closePath();
 	ctx.stroke();
 
-	// Rotate
+	// Check game state: is player colliding with asteroid
+	// if(asteroidDistanceAllowed())
+
+	if (SHOW_COLLISION) {
+		ctx.strokeStyle = 'green';
+		ctx.beginPath();
+		ctx.arc(
+			playerShip.position.x,
+			playerShip.position.y,
+			playerShip.radius,
+			0,
+			2 * Math.PI,
+			false
+		);
+		ctx.stroke();
+	}
+
+	// Rotate ship
 	playerShip.position.angle += playerShip.position.rotation;
 
 	// Ship thrust state
@@ -261,13 +279,14 @@ function updateCanvas() {
 	ctx.fillRect(playerShip.position.x - 1, playerShip.position.y - 1, 2, 2);
 
 	// ==Draw asteroids==
-	ctx.strokeStyle = 'slategrey';
 	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
 	currentAsteroidsArray.forEach((asteroid) => {
+		ctx.strokeStyle = 'slategrey';
+
 		// Path
 		ctx.beginPath();
-		// Center of asteroid
 
+		// Center of asteroid
 		ctx.moveTo(
 			asteroid.position.x +
 				asteroid.radius *
@@ -301,6 +320,20 @@ function updateCanvas() {
 		}
 		ctx.closePath();
 		ctx.stroke();
+
+		if (SHOW_COLLISION) {
+			ctx.strokeStyle = 'green';
+			ctx.beginPath();
+			ctx.arc(
+				asteroid.position.x,
+				asteroid.position.y,
+				asteroid.radius,
+				0,
+				Math.PI * 2,
+				false
+			);
+			ctx.stroke();
+		}
 
 		// Asteroid movement
 
