@@ -25,11 +25,13 @@ const SHIP_DEATH_TIME = 0.3;
 // Default asteroid values
 const ASTEROIDS_NUMBER = 5;
 const ASTEROIDS_SIZE_PX = 100;
+const ASTEROIDS_HEIGHT_PX = 30;
 const ASTEROID_SHAPE_VARIATION = 0.5;
 const ASTEROIDS_VERTEX_AVG = 10;
 // Max acceleration per second
 const ASTEROID_SPEED_PX = 20;
 
+// Development values
 const SHOW_COLLISION = true;
 
 // Background stars
@@ -38,33 +40,57 @@ const NUM_STARS = 10;
 // Draw scene framerate times per second. (use requestanimationframe)
 // setInterval(updateCanvas, 1000 / FRAMERATE);
 
-// ==Objects==
-let playerShip = {
-	radius: SHIP_HEIGHT_PX / 2,
-	isAlive: true,
-	lives: 33,
-	deathTimer: 0,
-	isShooting: false,
+// ==Player ship==
+let playerShip = createNewPlayerShip();
 
-	position: {
-		// Center of canvas by default
-		x: canvas.width / 2,
-		y: canvas.height / 2,
-		// ship heading: radians
-		angle: (90 / 180) * Math.PI,
-		rotation: 0,
-	},
+function createNewPlayerShip() {
+	// playerShip = {
+	// 	radius: SHIP_HEIGHT_PX / 2,
+	// 	isAlive: true,
+	// 	lives: 33,
+	// 	deathTimer: 0,
+	// 	isShooting: false,
 
-	shipThrusting: false,
-	// Simulate momentum
-	thrust: {
-		x: 0,
-		y: 0,
-	},
-};
+	// 	position: {
+	// 		x: canvas.width / 2,
+	// 		y: canvas.height / 2,
+
+	// 		angle: (90 / 180) * Math.PI,
+	// 		rotation: 0,
+	// 	},
+
+	// 	shipThrusting: false,
+	// 	thrust: {
+	// 		x: 0,
+	// 		y: 0,
+	// 	},
+	// };
+	return {
+		radius: SHIP_HEIGHT_PX / 2,
+		isAlive: true,
+		lives: 33,
+		deathTimer: 0,
+		isShooting: false,
+
+		position: {
+			x: canvas.width / 2,
+			y: canvas.height / 2,
+
+			angle: (90 / 180) * Math.PI,
+			rotation: 0,
+		},
+
+		shipThrusting: false,
+		thrust: {
+			x: 0,
+			y: 0,
+		},
+	};
+}
 
 function updateShipDeathState() {
 	playerShip.deathTimer = Math.ceil(SHIP_DEATH_TIME * FRAMERATE);
+	console.log(playerShip.deathTimer);
 }
 function applyShipFriction() {
 	playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
@@ -143,14 +169,17 @@ createAsteroidsArray();
 console.log(currentAsteroidsArray);
 
 function updateCanvas() {
-	let playerLoseState = playerShip.deathTimer > 0;
+	// Timer bool: player is losing. If countdown reaches 0, game over
+	let playerLossStateTime = playerShip.deathTimer > 0;
+	// console.log(playerLossStateTime);
+	// console.log(playerShip.deathTimer);
 
 	// ==Draw Background: "space"==
 	ctx.fillStyle = 'black';
 	ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
 	// ==Draw Player Ship: (triangle) while player alive==
-	if (!playerLoseState) {
+	if (!playerLossStateTime) {
 		ctx.strokeStyle = 'white';
 		ctx.lineWidth = SHIP_HEIGHT_PX / 20;
 		ctx.beginPath();
@@ -221,7 +250,7 @@ function updateCanvas() {
 		);
 		ctx.fill();
 
-		ctx.fillStyle = 'orange';
+		ctx.fillStyle = 'yellow';
 		ctx.beginPath();
 		ctx.arc(
 			playerShip.position.x,
@@ -234,23 +263,6 @@ function updateCanvas() {
 		ctx.fill();
 
 		ctx.stroke();
-	}
-
-	// Check game state: is player colliding with asteroid
-	if (!playerLoseState) {
-		currentAsteroidsArray.forEach((asteroid) => {
-			if (
-				asteroidDistanceAllowed(
-					playerShip.position.x,
-					playerShip.position.y,
-					asteroid.position.x,
-					asteroid.position.y
-				) <
-				playerShip.radius + asteroid.radius
-			) {
-				updateShipDeathState();
-			}
-		});
 	}
 
 	if (SHOW_COLLISION) {
@@ -267,7 +279,22 @@ function updateCanvas() {
 		ctx.stroke();
 	}
 
-	if (!playerLoseState) {
+	if (!playerLossStateTime) {
+		// Check game state: is player colliding with asteroid
+		currentAsteroidsArray.forEach((asteroid) => {
+			if (
+				asteroidDistanceAllowed(
+					playerShip.position.x,
+					playerShip.position.y,
+					asteroid.position.x,
+					asteroid.position.y
+				) <
+				playerShip.radius + asteroid.radius
+			) {
+				updateShipDeathState();
+			}
+		});
+
 		// Rotate ship
 		playerShip.position.angle += playerShip.position.rotation;
 
@@ -333,9 +360,15 @@ function updateCanvas() {
 			applyShipFriction();
 		}
 	} else {
+		playerShip.deathTimer--;
+		if (playerShip.deathTimer == 0) {
+			updateShipDeathState();
+			console.log('deathtime', playerShip.deathTimer);
+
+			playerShip = createNewPlayerShip();
+		}
 		applyShipFriction();
 	}
-
 	// Move on canvas
 	playerShip.position.x += playerShip.thrust.x;
 	playerShip.position.y += playerShip.thrust.y;
@@ -355,11 +388,10 @@ function updateCanvas() {
 	}
 
 	// ==Draw asteroids==
-	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+	ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
 	currentAsteroidsArray.forEach((asteroid) => {
 		ctx.strokeStyle = 'slategrey';
 
-		// Path
 		ctx.beginPath();
 
 		// Center of asteroid
@@ -450,8 +482,6 @@ function populateStars() {
 }
 
 populateStars();
-
-console.log(playerShip.position.x);
 
 function debounce(func, timeout = 300) {
 	let timer;
