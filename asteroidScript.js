@@ -21,6 +21,8 @@ const SHIP_TURN_SPEED = 180;
 const SHIP_THRUST_SPEED_PX = 1;
 const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
+const SHIP_INVULNERABLE_TIME = 3;
+const SHIP_BLINK_TIME = 0.3;
 
 // Default asteroid values
 const ASTEROIDS_NUMBER = 5;
@@ -70,6 +72,9 @@ function createNewPlayerShip() {
 		isAlive: true,
 		lives: 33,
 		deathTimer: 0,
+		blinkingTime: Math.ceil(SHIP_BLINK_TIME * FRAMERATE),
+		blinkingCount: Math.ceil(SHIP_INVULNERABLE_TIME / SHIP_BLINK_TIME),
+
 		isShooting: false,
 
 		position: {
@@ -90,7 +95,6 @@ function createNewPlayerShip() {
 
 function updateShipDeathState() {
 	playerShip.deathTimer = Math.ceil(SHIP_DEATH_TIME * FRAMERATE);
-	console.log(playerShip.deathTimer);
 }
 function applyShipFriction() {
 	playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
@@ -363,7 +367,7 @@ function updateCanvas() {
 		playerShip.deathTimer--;
 		if (playerShip.deathTimer == 0) {
 			updateShipDeathState();
-			console.log('deathtime', playerShip.deathTimer);
+			// console.log('deathtime', playerShip.deathTimer);
 
 			playerShip = createNewPlayerShip();
 		}
