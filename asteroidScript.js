@@ -98,6 +98,7 @@ function createNewPlayerShip() {
 	};
 }
 
+// ==Shooting==
 function playerShot() {
 	if (
 		playerShip.shootingAllowed &&
@@ -115,12 +116,14 @@ function playerShot() {
 				(PLAYER_SHOT_SPEED_PX * Math.cos(playerShip.position.angle)) /
 				FRAMERATE,
 			yVelocity:
-				(PLAYER_SHOT_SPEED_PX * Math.sin(playerShip.position.angle)) /
+				-(PLAYER_SHOT_SPEED_PX * Math.sin(playerShip.position.angle)) /
 				FRAMERATE,
+			rotation: playerShip.position.angle / 360,
 		});
 	}
 	playerShip.shootingAllowed = false;
 	console.log(playerShip.currentShots);
+	console.log(playerShip.position.angle);
 }
 
 function updateShipDeathState() {
@@ -265,11 +268,15 @@ function updateCanvas() {
 		}
 		// Draw player shots
 		playerShip.currentShots.forEach((shot) => {
-			ctx.fillStyle = 'red';
+			// ctx.fillStyle = 'red';
+			ctx.strokeStyle = 'red';
 			ctx.beginPath();
 			// Line shot or circle shot
 			ctx.moveTo(shot.x, shot.y);
-			ctx.lineTo(shot.x + 20, shot.y + 20);
+			ctx.lineTo(
+				shot.x + shot.rotation + PLAYER_SHOT_HEIGHT,
+				shot.y + shot.rotation + PLAYER_SHOT_HEIGHT
+			);
 			// ctx.arc(shot.x, shot.y, SHIP_HEIGHT_PX / 15, 0, Math.PI * 2, false);
 			// ctx.fill();
 
@@ -435,7 +442,7 @@ function updateCanvas() {
 		}
 		applyShipFriction();
 	}
-	// Move on canvas
+	// Move player on canvas
 	playerShip.position.x += playerShip.thrust.x;
 	playerShip.position.y += playerShip.thrust.y;
 
@@ -452,6 +459,14 @@ function updateCanvas() {
 	} else if (playerShip.position.y > canvas.height + playerShip.radius) {
 		playerShip.position.y = 0 - playerShip.radius;
 	}
+
+	// Player shot movement
+	playerShip.currentShots.forEach((shot) => {
+		// shot.x += shot.xVelocity * 2;
+		// shot.y += shot.yVelocity * 2;
+		shot.x += shot.xVelocity * FRAMERATE;
+		shot.y += shot.yVelocity * FRAMERATE;
+	});
 
 	// ==Draw asteroids==
 	ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
@@ -495,20 +510,6 @@ function updateCanvas() {
 		ctx.closePath();
 		ctx.stroke();
 
-		if (SHOW_COLLISION) {
-			ctx.strokeStyle = 'green';
-			ctx.beginPath();
-			ctx.arc(
-				asteroid.position.x,
-				asteroid.position.y,
-				asteroid.radius,
-				0,
-				Math.PI * 2,
-				false
-			);
-			ctx.stroke();
-		}
-
 		// Asteroid movement
 
 		asteroid.position.x += asteroid.position.xVelocity;
@@ -525,6 +526,20 @@ function updateCanvas() {
 			asteroid.position.y = canvas.height + asteroid.radius;
 		} else if (asteroid.position.y > canvas.height + asteroid.radius) {
 			asteroid.position.y = 0 - asteroid.radius;
+		}
+
+		if (SHOW_COLLISION) {
+			ctx.strokeStyle = 'green';
+			ctx.beginPath();
+			ctx.arc(
+				asteroid.position.x,
+				asteroid.position.y,
+				asteroid.radius,
+				0,
+				Math.PI * 2,
+				false
+			);
+			ctx.stroke();
 		}
 	});
 
