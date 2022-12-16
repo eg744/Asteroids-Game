@@ -1,8 +1,6 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-let screenCoordX = window.innerWidth;
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 // canvas.width = '500';
@@ -23,6 +21,11 @@ const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
+
+// Ship laser values
+const PLAYER_SHOTS_MAX = 10;
+const PLAYER_SHOT_HEIGHT = 5;
+const PLAYER_SHOT_SPEED_PX = 5;
 
 // Default asteroid values
 const ASTEROIDS_NUMBER = 5;
@@ -76,6 +79,8 @@ function createNewPlayerShip() {
 		blinkingCount: Math.ceil(SHIP_INVULNERABLE_TIME / SHIP_BLINK_TIME),
 
 		isShooting: false,
+		shootingAllowed: true,
+		currentShots: [],
 
 		position: {
 			x: canvas.width / 2,
@@ -91,6 +96,34 @@ function createNewPlayerShip() {
 			y: 0,
 		},
 	};
+}
+
+// ==Shooting==
+function playerShot() {
+	if (
+		playerShip.shootingAllowed &&
+		playerShip.currentShots.length < PLAYER_SHOTS_MAX
+	) {
+		playerShip.currentShots.push({
+			x:
+				playerShip.position.x +
+				playerShip.radius * Math.cos(playerShip.position.angle),
+			y:
+				playerShip.position.y -
+				playerShip.radius * Math.sin(playerShip.position.angle),
+
+			xVelocity:
+				(PLAYER_SHOT_SPEED_PX * Math.cos(playerShip.position.angle)) /
+				FRAMERATE,
+			yVelocity:
+				-(PLAYER_SHOT_SPEED_PX * Math.sin(playerShip.position.angle)) /
+				FRAMERATE,
+			rotation: playerShip.position.angle / 360,
+		});
+	}
+	playerShip.shootingAllowed = false;
+	console.log(playerShip.currentShots);
+	console.log(playerShip.position.angle);
 }
 
 function updateShipDeathState() {
@@ -175,59 +208,92 @@ console.log(currentAsteroidsArray);
 function updateCanvas() {
 	// Timer bool: player is losing. If countdown reaches 0, game over
 	let playerLossStateTime = playerShip.deathTimer > 0;
+
+	// Player invulnerability signaled by blink on even intervals: draw ship
+	let playerBlinkingOn = playerShip.blinkingCount % 2 == 0;
 	// console.log(playerLossStateTime);
 	// console.log(playerShip.deathTimer);
 
 	// ==Draw Background: "space"==
 	ctx.fillStyle = 'black';
-	ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	// ==Draw Player Ship: (triangle) while player alive==
 	if (!playerLossStateTime) {
-		ctx.strokeStyle = 'white';
-		ctx.lineWidth = SHIP_HEIGHT_PX / 20;
-		ctx.beginPath();
+		if (playerBlinkingOn) {
+			ctx.strokeStyle = 'white';
+			ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+			ctx.beginPath();
 
-		// Head
-		ctx.moveTo(
-			playerShip.position.x +
-				playerShip.radius * Math.cos(playerShip.position.angle),
-			playerShip.position.y -
-				playerShip.radius * Math.sin(playerShip.position.angle)
-		);
-		// Rear left
-		ctx.lineTo(
-			playerShip.position.x -
-				playerShip.radius *
-					(Math.cos(playerShip.position.angle) +
-						Math.sin(playerShip.position.angle)),
-			playerShip.position.y +
-				playerShip.radius *
-					(Math.sin(playerShip.position.angle) -
-						Math.cos(playerShip.position.angle))
-		);
-		// Rear right
-		ctx.lineTo(
-			playerShip.position.x -
-				playerShip.radius *
-					(Math.cos(playerShip.position.angle) -
-						Math.sin(playerShip.position.angle)),
-			playerShip.position.y +
-				playerShip.radius *
-					(Math.sin(playerShip.position.angle) +
-						Math.cos(playerShip.position.angle))
-		);
-		ctx.closePath();
-		ctx.stroke();
+			// Head
+			ctx.moveTo(
+				playerShip.position.x +
+					playerShip.radius * Math.cos(playerShip.position.angle),
+				playerShip.position.y -
+					playerShip.radius * Math.sin(playerShip.position.angle)
+			);
+			// Rear left
+			ctx.lineTo(
+				playerShip.position.x -
+					playerShip.radius *
+						(Math.cos(playerShip.position.angle) +
+							Math.sin(playerShip.position.angle)),
+				playerShip.position.y +
+					playerShip.radius *
+						(Math.sin(playerShip.position.angle) -
+							Math.cos(playerShip.position.angle))
+			);
+			// Rear right
+			ctx.lineTo(
+				playerShip.position.x -
+					playerShip.radius *
+						(Math.cos(playerShip.position.angle) -
+							Math.sin(playerShip.position.angle)),
+				playerShip.position.y +
+					playerShip.radius *
+						(Math.sin(playerShip.position.angle) +
+							Math.cos(playerShip.position.angle))
+			);
+			ctx.closePath();
+			ctx.stroke();
 
-		// dot cockpit
-		ctx.fillStyle = 'white';
-		ctx.fillRect(
-			playerShip.position.x - 1,
-			playerShip.position.y - 1,
-			2,
-			2
-		);
+			// dot cockpit
+			ctx.fillStyle = 'white';
+			ctx.fillRect(
+				playerShip.position.x - 1,
+				playerShip.position.y - 1,
+				2,
+				2
+			);
+		}
+		// Draw player shots
+		playerShip.currentShots.forEach((shot) => {
+			// ctx.fillStyle = 'red';
+			ctx.strokeStyle = 'red';
+			ctx.beginPath();
+			// Line shot or circle shot
+			ctx.moveTo(shot.x, shot.y);
+			ctx.lineTo(
+				shot.x + shot.rotation + PLAYER_SHOT_HEIGHT,
+				shot.y + shot.rotation + PLAYER_SHOT_HEIGHT
+			);
+			// ctx.arc(shot.x, shot.y, SHIP_HEIGHT_PX / 15, 0, Math.PI * 2, false);
+			// ctx.fill();
+
+			ctx.closePath();
+			ctx.stroke();
+		});
+
+		if (playerShip.blinkingCount > 0) {
+			// Reduce blink time until not invulnerable
+			playerShip.blinkingTime--;
+			if (playerShip.blinkingTime == 0) {
+				playerShip.blinkingTime = Math.ceil(
+					SHIP_BLINK_TIME * FRAMERATE
+				);
+				playerShip.blinkingCount--;
+			}
+		}
 	} else {
 		// Loss state graphic
 		ctx.fillStyle = 'red';
@@ -284,26 +350,29 @@ function updateCanvas() {
 	}
 
 	if (!playerLossStateTime) {
-		// Check game state: is player colliding with asteroid
-		currentAsteroidsArray.forEach((asteroid) => {
-			if (
-				asteroidDistanceAllowed(
-					playerShip.position.x,
-					playerShip.position.y,
-					asteroid.position.x,
-					asteroid.position.y
-				) <
-				playerShip.radius + asteroid.radius
-			) {
-				updateShipDeathState();
-			}
-		});
+		// Player invulnerable while in blinking state after collision
+		if (playerShip.blinkingCount == 0) {
+			// Check game state: is player colliding with asteroid
+			currentAsteroidsArray.forEach((asteroid) => {
+				if (
+					asteroidDistanceAllowed(
+						playerShip.position.x,
+						playerShip.position.y,
+						asteroid.position.x,
+						asteroid.position.y
+					) <
+					playerShip.radius + asteroid.radius
+				) {
+					updateShipDeathState();
+				}
+			});
+		}
 
 		// Rotate ship
 		playerShip.position.angle += playerShip.position.rotation;
 
 		// Ship thrust state
-		if (playerShip.shipThrusting) {
+		if (playerShip.shipThrusting && playerBlinkingOn) {
 			// Accelerate along cos (X of ship's angle)
 			playerShip.thrust.x +=
 				(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
@@ -373,7 +442,7 @@ function updateCanvas() {
 		}
 		applyShipFriction();
 	}
-	// Move on canvas
+	// Move player on canvas
 	playerShip.position.x += playerShip.thrust.x;
 	playerShip.position.y += playerShip.thrust.y;
 
@@ -390,6 +459,21 @@ function updateCanvas() {
 	} else if (playerShip.position.y > canvas.height + playerShip.radius) {
 		playerShip.position.y = 0 - playerShip.radius;
 	}
+
+	// Player shot movement
+	playerShip.currentShots.forEach((shot) => {
+		// shot.x += shot.xVelocity * 2;
+		// shot.y += shot.yVelocity * 2;
+		shot.x += shot.xVelocity * FRAMERATE;
+		shot.y += shot.yVelocity * FRAMERATE;
+
+		// Remove shots as they exit play area
+		if (shot.x < 0 || shot.x > canvas.width) {
+			playerShip.currentShots.splice(shot, 1);
+		} else if (shot.y < 0 || shot.y > canvas.height) {
+			playerShip.currentShots.splice(shot, 1);
+		}
+	});
 
 	// ==Draw asteroids==
 	ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
@@ -433,20 +517,6 @@ function updateCanvas() {
 		ctx.closePath();
 		ctx.stroke();
 
-		if (SHOW_COLLISION) {
-			ctx.strokeStyle = 'green';
-			ctx.beginPath();
-			ctx.arc(
-				asteroid.position.x,
-				asteroid.position.y,
-				asteroid.radius,
-				0,
-				Math.PI * 2,
-				false
-			);
-			ctx.stroke();
-		}
-
 		// Asteroid movement
 
 		asteroid.position.x += asteroid.position.xVelocity;
@@ -463,6 +533,20 @@ function updateCanvas() {
 			asteroid.position.y = canvas.height + asteroid.radius;
 		} else if (asteroid.position.y > canvas.height + asteroid.radius) {
 			asteroid.position.y = 0 - asteroid.radius;
+		}
+
+		if (SHOW_COLLISION) {
+			ctx.strokeStyle = 'green';
+			ctx.beginPath();
+			ctx.arc(
+				asteroid.position.x,
+				asteroid.position.y,
+				asteroid.radius,
+				0,
+				Math.PI * 2,
+				false
+			);
+			ctx.stroke();
 		}
 	});
 
@@ -518,11 +602,13 @@ document.addEventListener('keyup', keyUpAction);
 
 // Moving, rotating ship
 function keyDownAction(event) {
-	console.log(event);
+	// console.log(event);
 	switch (event.keyCode) {
 		// Space: shoot
 		case 32:
 			isShooting = true;
+			playerShot();
+
 			break;
 		// Rotate left
 		case 37:
@@ -551,6 +637,8 @@ function keyUpAction(event) {
 	switch (event.keyCode) {
 		case 32:
 			isShooting = false;
+			playerShip.shootingAllowed = true;
+
 			break;
 		case 37:
 			playerShip.position.rotation = 0;
