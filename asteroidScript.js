@@ -466,6 +466,13 @@ function updateCanvas() {
 		// shot.y += shot.yVelocity * 2;
 		shot.x += shot.xVelocity * FRAMERATE;
 		shot.y += shot.yVelocity * FRAMERATE;
+
+		// Remove shots as they exit play area
+		if (shot.x < 0 || shot.x > canvas.width) {
+			playerShip.currentShots.splice(shot, 1);
+		} else if (shot.y < 0 || shot.y > canvas.height) {
+			playerShip.currentShots.splice(shot, 1);
+		}
 	});
 
 	// ==Draw asteroids==
