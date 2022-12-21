@@ -37,7 +37,7 @@ const ASTEROIDS_VERTEX_AVG = 10;
 const ASTEROID_SPEED_PX = 20;
 
 // Development values
-const SHOW_COLLISION = true;
+const SHOW_COLLISION = false;
 
 // Background stars
 const NUM_STARS = 10;
@@ -218,11 +218,50 @@ function handleAsteroidSplit(index) {
 	let oldRadius = currentAsteroidsArray[index].radius;
 
 	// Asteroid possible to split
-	if (oldRadius > 0 && oldRadius == Math.ceil(ASTEROIDS_HEIGHT_PX / 2)) {
-		// Replace with 2 smaller asteroids
-		currentAsteroidsArray.push(asteroidX, asteroidY, oldRadius / 2);
-		currentAsteroidsArray.push(asteroidX, asteroidY, oldRadius / 2);
+	if (oldRadius > 0) {
+		switch (true) {
+			case oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2):
+				// Replace with 2 smaller asteroids
+				currentAsteroidsArray.splice(index, 1);
+
+				currentAsteroidsArray.push(
+					createNewAsteroid(asteroidX, asteroidY, oldRadius / 2)
+				);
+				currentAsteroidsArray.push(
+					createNewAsteroid(asteroidX, asteroidY, oldRadius / 2)
+				);
+
+				break;
+
+			case oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 4):
+				currentAsteroidsArray.splice(index, 1);
+
+				currentAsteroidsArray.push(
+					createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
+				);
+				currentAsteroidsArray.push(
+					createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
+				);
+
+				break;
+
+			// Fully destroyed
+			default:
+				currentAsteroidsArray.splice(index, 1);
+				break;
+		}
 	}
+	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
+
+	// if (oldRadius > 0 && oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2)) {
+	// 	// Replace with 2 smaller asteroids
+	// 	currentAsteroidsArray.push(
+	// 		createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
+	// 	);
+	// 	currentAsteroidsArray.push(
+	// 		createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
+	// 	);
+	// }
 }
 
 createAsteroidsArray();
@@ -461,7 +500,11 @@ function updateCanvas() {
 			updateShipDeathState();
 			// console.log('deathtime', playerShip.deathTimer);
 
-			playerShip = createNewPlayerShip();
+			playerShip = createNewPlayerShip(
+				canvas.width / 2,
+				canvas.height / 2,
+				SHIP_HEIGHT_PX / 2
+			);
 		}
 		applyShipFriction();
 	}
@@ -678,6 +721,8 @@ function keyDownAction(event) {
 			break;
 		// Brake
 		case 40:
+			isShooting = true;
+			playerShot();
 			break;
 	}
 }
@@ -706,6 +751,10 @@ function keyUpAction(event) {
 		case 39:
 			playerShip.position.rotation = 0;
 
+			break;
+		case 40:
+			isShooting = false;
+			playerShip.shootingAllowed = true;
 			break;
 	}
 }
