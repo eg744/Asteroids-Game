@@ -46,9 +46,14 @@ const NUM_STARS = 10;
 // setInterval(updateCanvas, 1000 / FRAMERATE);
 
 // ==Player ship==
-let playerShip = createNewPlayerShip();
+// Default
+let playerShip = createNewPlayerShip(
+	canvas.width / 2,
+	canvas.height / 2,
+	SHIP_HEIGHT_PX / 2
+);
 
-function createNewPlayerShip() {
+function createNewPlayerShip(xPosition, yPosition, radius) {
 	// playerShip = {
 	// 	radius: SHIP_HEIGHT_PX / 2,
 	// 	isAlive: true,
@@ -71,7 +76,7 @@ function createNewPlayerShip() {
 	// 	},
 	// };
 	return {
-		radius: SHIP_HEIGHT_PX / 2,
+		radius: radius,
 		isAlive: true,
 		lives: 33,
 		deathTimer: 0,
@@ -83,8 +88,8 @@ function createNewPlayerShip() {
 		currentShots: [],
 
 		position: {
-			x: canvas.width / 2,
-			y: canvas.height / 2,
+			x: xPosition,
+			y: yPosition,
 
 			angle: (90 / 180) * Math.PI,
 			rotation: 0,
@@ -137,9 +142,9 @@ function applyShipFriction() {
 // ==Asteroids==
 let currentAsteroidsArray = [];
 
-function createNewAsteroid(x, y) {
+function createNewAsteroid(x, y, radius) {
 	let asteroid = {
-		radius: ASTEROIDS_SIZE_PX / 2,
+		radius: radius,
 		// Each vertex 1 radius from center point
 		vertices: Math.floor(
 			Math.random() * (ASTEROIDS_VERTEX_AVG + 1) +
@@ -198,7 +203,25 @@ function createAsteroidsArray() {
 			ASTEROIDS_SIZE_PX * 2 + playerShip.radius
 		);
 
-		currentAsteroidsArray.push(createNewAsteroid(asteroidX, asteroidY));
+		currentAsteroidsArray.push(
+			createNewAsteroid(
+				asteroidX,
+				asteroidY,
+				Math.ceil(ASTEROIDS_SIZE_PX / 2)
+			)
+		);
+	}
+}
+function handleAsteroidSplit(index) {
+	let asteroidX = currentAsteroidsArray[index].position.x;
+	let asteroidY = currentAsteroidsArray[index].position.y;
+	let oldRadius = currentAsteroidsArray[index].radius;
+
+	// Asteroid possible to split
+	if (oldRadius > 0 && oldRadius == Math.ceil(ASTEROIDS_HEIGHT_PX / 2)) {
+		// Replace with 2 smaller asteroids
+		currentAsteroidsArray.push(asteroidX, asteroidY, oldRadius / 2);
+		currentAsteroidsArray.push(asteroidX, asteroidY, oldRadius / 2);
 	}
 }
 
@@ -275,7 +298,7 @@ function updateCanvas() {
 			ctx.moveTo(shot.x, shot.y);
 			ctx.lineTo(
 				shot.x + shot.rotation + PLAYER_SHOT_HEIGHT,
-				shot.y + shot.rotation + PLAYER_SHOT_HEIGHT
+				shot.y - shot.rotation + PLAYER_SHOT_HEIGHT
 			);
 			// ctx.arc(shot.x, shot.y, SHIP_HEIGHT_PX / 15, 0, Math.PI * 2, false);
 			// ctx.fill();
@@ -475,10 +498,37 @@ function updateCanvas() {
 		}
 	});
 
+	// currentAsteroidsArray.forEach((asteroid) => {
+	// if(asteroid.position.x )
+	// playerShip.currentShots.forEach((shot) => {
+
+	// Collision between player shots and asteroids
+	for (let i = currentAsteroidsArray.length - 1; i >= 0; i--) {
+		for (let j = playerShip.currentShots.length - 1; j >= 0; j--) {
+			if (
+				asteroidDistanceAllowed(
+					currentAsteroidsArray[i].position.x,
+					currentAsteroidsArray[i].position.y,
+					playerShip.currentShots[j].x,
+					playerShip.currentShots[j].y
+				) < currentAsteroidsArray[i].radius
+			) {
+				// Remove shot: free space for shots on screen
+				playerShip.currentShots.splice(j, 1);
+
+				// Break/destroy asteroid
+				handleAsteroidSplit(i);
+				// currentAsteroidsArray.splice(i, 1);
+				break;
+			}
+		}
+	}
+
 	// ==Draw asteroids==
 	ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
 	currentAsteroidsArray.forEach((asteroid) => {
-		ctx.strokeStyle = 'slategrey';
+		// ctx.strokeStyle = 'slategrey';
+		ctx.strokeStyle = '#807a6f';
 
 		ctx.beginPath();
 
