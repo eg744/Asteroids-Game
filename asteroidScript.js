@@ -26,6 +26,7 @@ const SHIP_BLINK_TIME = 0.3;
 const PLAYER_SHOTS_MAX = 10;
 const PLAYER_SHOT_HEIGHT = 5;
 const PLAYER_SHOT_SPEED_PX = 5;
+const PLAYER_SHOT_ACTIVATION_TIME = 0.3;
 
 // Default asteroid values
 const ASTEROIDS_NUMBER = 5;
@@ -166,6 +167,7 @@ function createNewAsteroid(x, y, radius) {
 			angle: Math.random() * Math.PI * 2,
 		},
 	};
+
 	// Vertex offsets: random multiplier to radius (between default and 2 * radius)
 	for (let i = 0; i < asteroid.vertices; i++) {
 		asteroid.offset.push(
@@ -212,6 +214,7 @@ function createAsteroidsArray() {
 		);
 	}
 }
+
 function handleAsteroidSplit(index) {
 	let asteroidX = currentAsteroidsArray[index].position.x;
 	let asteroidY = currentAsteroidsArray[index].position.y;
@@ -252,20 +255,10 @@ function handleAsteroidSplit(index) {
 		}
 	}
 	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
-
-	// if (oldRadius > 0 && oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2)) {
-	// 	// Replace with 2 smaller asteroids
-	// 	currentAsteroidsArray.push(
-	// 		createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
-	// 	);
-	// 	currentAsteroidsArray.push(
-	// 		createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
-	// 	);
-	// }
 }
 
 createAsteroidsArray();
-console.log(currentAsteroidsArray);
+console.log('asteroids', currentAsteroidsArray);
 
 function updateCanvas() {
 	// Timer bool: player is losing. If countdown reaches 0, game over
@@ -414,8 +407,7 @@ function updateCanvas() {
 	if (!playerLossStateTime) {
 		// Player invulnerable while in blinking state after collision
 		if (playerShip.blinkingCount == 0) {
-			// Check game state: is player colliding with asteroid
-			currentAsteroidsArray.forEach((asteroid) => {
+			currentAsteroidsArray.forEach((asteroid, index) => {
 				if (
 					asteroidDistanceAllowed(
 						playerShip.position.x,
@@ -425,6 +417,7 @@ function updateCanvas() {
 					) <
 					playerShip.radius + asteroid.radius
 				) {
+					handleAsteroidSplit(index);
 					updateShipDeathState();
 				}
 			});
