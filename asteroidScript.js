@@ -22,10 +22,11 @@ const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
 
-// Ship laser values
+// Player ship shot values
 const PLAYER_SHOTS_MAX = 10;
 const PLAYER_SHOT_HEIGHT = 5;
 const PLAYER_SHOT_SPEED_PX = 5;
+const PLAYER_SHOT_CONTACT_TIME = 0.02;
 
 // Default asteroid values
 const ASTEROIDS_NUMBER = 5;
@@ -124,6 +125,7 @@ function playerShot() {
 				-(PLAYER_SHOT_SPEED_PX * Math.sin(playerShip.position.angle)) /
 				FRAMERATE,
 			rotation: playerShip.position.angle / 360,
+			contactTime: 0,
 		});
 	}
 	playerShip.shootingAllowed = false;
@@ -166,6 +168,7 @@ function createNewAsteroid(x, y, radius) {
 			angle: Math.random() * Math.PI * 2,
 		},
 	};
+
 	// Vertex offsets: random multiplier to radius (between default and 2 * radius)
 	for (let i = 0; i < asteroid.vertices; i++) {
 		asteroid.offset.push(
@@ -177,8 +180,8 @@ function createNewAsteroid(x, y, radius) {
 	return asteroid;
 }
 
-function asteroidDistanceAllowed(shipX, shipY, asteroidX, asteroidY) {
-	// Square root of square of distance between the player and generated asteroids
+function asteroidDistanceCalculated(shipX, shipY, asteroidX, asteroidY) {
+	// Square root of square of distance between the object (currently player ship and shots) and generated asteroids
 	return Math.sqrt(
 		Math.pow(asteroidX - shipX, 2) + Math.pow(asteroidY - shipY, 2)
 	);
@@ -194,7 +197,7 @@ function createAsteroidsArray() {
 			asteroidX = Math.floor(Math.random() * canvas.width);
 			asteroidY = Math.floor(Math.random() * canvas.height);
 		} while (
-			asteroidDistanceAllowed(
+			asteroidDistanceCalculated(
 				playerShip.position.x,
 				playerShip.position.y,
 				asteroidX,
@@ -212,6 +215,7 @@ function createAsteroidsArray() {
 		);
 	}
 }
+
 function handleAsteroidSplit(index) {
 	let asteroidX = currentAsteroidsArray[index].position.x;
 	let asteroidY = currentAsteroidsArray[index].position.y;
@@ -252,20 +256,10 @@ function handleAsteroidSplit(index) {
 		}
 	}
 	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
-
-	// if (oldRadius > 0 && oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2)) {
-	// 	// Replace with 2 smaller asteroids
-	// 	currentAsteroidsArray.push(
-	// 		createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
-	// 	);
-	// 	currentAsteroidsArray.push(
-	// 		createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
-	// 	);
-	// }
 }
 
 createAsteroidsArray();
-console.log(currentAsteroidsArray);
+console.log('asteroids', currentAsteroidsArray);
 
 function updateCanvas() {
 	// Timer bool: player is losing. If countdown reaches 0, game over
@@ -329,21 +323,62 @@ function updateCanvas() {
 			);
 		}
 		// Draw player shots
-		playerShip.currentShots.forEach((shot) => {
-			// ctx.fillStyle = 'red';
-			ctx.strokeStyle = 'red';
-			ctx.beginPath();
-			// Line shot or circle shot
-			ctx.moveTo(shot.x, shot.y);
-			ctx.lineTo(
-				shot.x + shot.rotation + PLAYER_SHOT_HEIGHT,
-				shot.y - shot.rotation + PLAYER_SHOT_HEIGHT
-			);
-			// ctx.arc(shot.x, shot.y, SHIP_HEIGHT_PX / 15, 0, Math.PI * 2, false);
-			// ctx.fill();
+		playerShip.currentShots.forEach((shot, index) => {
+			// Shot not in contact with object
+			// if (playerShip.currentShots[index].PLAYER_SHOT_CONTACT_TIME == 0) {
+			if (shot.contactTime == 0) {
+				// ctx.fillStyle = 'red';
+				ctx.strokeStyle = 'red';
+				ctx.beginPath();
+				// Line shot or circle shot
+				ctx.moveTo(shot.x, shot.y);
+				ctx.lineTo(
+					shot.x + shot.rotation + PLAYER_SHOT_HEIGHT,
+					shot.y - shot.rotation + PLAYER_SHOT_HEIGHT
+				);
+				// ctx.arc(shot.x, shot.y, SHIP_HEIGHT_PX / 15, 0, Math.PI * 2, false);
+				// ctx.fill();
 
-			ctx.closePath();
-			ctx.stroke();
+				ctx.closePath();
+				ctx.stroke();
+			} else {
+				// Shot contact graphic
+				ctx.fillStyle = 'red';
+				ctx.beginPath();
+				ctx.arc(
+					playerShip.currentShots[index].x,
+					playerShip.currentShots[index].y,
+					playerShip.radius * 0.75,
+					0,
+					Math.PI * 2,
+					false
+				);
+				ctx.fill();
+
+				ctx.fillStyle = 'orangered';
+				ctx.beginPath();
+				ctx.arc(
+					playerShip.currentShots[index].x,
+					playerShip.currentShots[index].y,
+					playerShip.radius * 0.5,
+					0,
+					Math.PI * 2,
+					false
+				);
+				ctx.fill();
+
+				ctx.fillStyle = 'orange';
+				ctx.beginPath();
+				ctx.arc(
+					playerShip.currentShots[index].x,
+					playerShip.currentShots[index].y,
+					playerShip.radius * 0.25,
+					0,
+					Math.PI * 2,
+					false
+				);
+				ctx.fill();
+			}
 		});
 
 		if (playerShip.blinkingCount > 0) {
@@ -414,10 +449,10 @@ function updateCanvas() {
 	if (!playerLossStateTime) {
 		// Player invulnerable while in blinking state after collision
 		if (playerShip.blinkingCount == 0) {
-			// Check game state: is player colliding with asteroid
-			currentAsteroidsArray.forEach((asteroid) => {
+			currentAsteroidsArray.forEach((asteroid, index) => {
+				// Player colliding with asteroid
 				if (
-					asteroidDistanceAllowed(
+					asteroidDistanceCalculated(
 						playerShip.position.x,
 						playerShip.position.y,
 						asteroid.position.x,
@@ -425,6 +460,7 @@ function updateCanvas() {
 					) <
 					playerShip.radius + asteroid.radius
 				) {
+					handleAsteroidSplit(index);
 					updateShipDeathState();
 				}
 			});
@@ -527,29 +563,69 @@ function updateCanvas() {
 	}
 
 	// Player shot movement
-	playerShip.currentShots.forEach((shot) => {
-		// shot.x += shot.xVelocity * 2;
-		// shot.y += shot.yVelocity * 2;
-		shot.x += shot.xVelocity * FRAMERATE;
-		shot.y += shot.yVelocity * FRAMERATE;
-
+	for (let i = 0; i < playerShip.currentShots.length; i++) {
 		// Remove shots as they exit play area
-		if (shot.x < 0 || shot.x > canvas.width) {
-			playerShip.currentShots.splice(shot, 1);
-		} else if (shot.y < 0 || shot.y > canvas.height) {
-			playerShip.currentShots.splice(shot, 1);
+		if (
+			playerShip.currentShots[i].x < 0 ||
+			playerShip.currentShots[i].x > canvas.width
+		) {
+			playerShip.currentShots.splice(i, 1);
+		} else if (
+			playerShip.currentShots[i].y < 0 ||
+			playerShip.currentShots[i].y > canvas.height
+		) {
+			playerShip.currentShots.splice(i, 1);
 		}
-	});
 
-	// currentAsteroidsArray.forEach((asteroid) => {
-	// if(asteroid.position.x )
-	// playerShip.currentShots.forEach((shot) => {
+		// 	if (playerShip.currentShots[i].contactTime > 0) {
+		// 		//TODO Making contact
+		// 		playerShip.currentShots[i].contactTime--;
+		// 		playerShip.currentShots.splice(i, 1);
+		// 		continue;
+		// 	} else {
+		// 		// Move shot
+		// 		// shot.x += shot.xVelocity * 2;
+		// 		// shot.y += shot.yVelocity * 2;
+		// 		playerShip.currentShots[i].x +=
+		// 			playerShip.currentShots[i].xVelocity * FRAMERATE;
+		// 		playerShip.currentShots[i].y +=
+		// 			playerShip.currentShots[i].yVelocity * FRAMERATE;
+		// 	}
+		// }
+
+		// Handle shot contact for animation
+		playerShip.currentShots.forEach((shot) => {
+			console.log('shot contact', shot.contactTime);
+			// Remove shots as they exit play area
+			if (shot.x < 0 || shot.x > canvas.width) {
+				playerShip.currentShots.splice(shot, 1);
+			} else if (shot.y < 0 || shot.y > canvas.height) {
+				playerShip.currentShots.splice(shot, 1);
+			}
+
+			// Handle shot contact for animation
+			if (shot.contactTime > 0) {
+				//TODO Making contact
+				shot.contactTime--;
+				playerShip.currentShots.splice(shot, 1);
+			} else {
+				// Move shot
+				// shot.x += shot.xVelocity * 2;
+				// shot.y += shot.yVelocity * 2;
+				shot.x += shot.xVelocity * FRAMERATE;
+				shot.y += shot.yVelocity * FRAMERATE;
+			}
+		});
+	}
 
 	// Collision between player shots and asteroids
+	// Loop by first inserted asteroids, player shots
 	for (let i = currentAsteroidsArray.length - 1; i >= 0; i--) {
 		for (let j = playerShip.currentShots.length - 1; j >= 0; j--) {
 			if (
-				asteroidDistanceAllowed(
+				// Shot, laser not finished colliding
+				playerShip.currentShots[j].contactTime == 0 &&
+				asteroidDistanceCalculated(
 					currentAsteroidsArray[i].position.x,
 					currentAsteroidsArray[i].position.y,
 					playerShip.currentShots[j].x,
@@ -557,10 +633,13 @@ function updateCanvas() {
 				) < currentAsteroidsArray[i].radius
 			) {
 				// Remove shot: free space for shots on screen
-				playerShip.currentShots.splice(j, 1);
+				// playerShip.currentShots.splice(j, 1);
 
-				// Break/destroy asteroid
+				// Break/destroy asteroid and show collision with laser
 				handleAsteroidSplit(i);
+				playerShip.currentShots[j].contactTime = Math.ceil(
+					PLAYER_SHOT_CONTACT_TIME * FRAMERATE
+				);
 				// currentAsteroidsArray.splice(i, 1);
 				break;
 			}
