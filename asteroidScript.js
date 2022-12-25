@@ -43,16 +43,30 @@ const SHOW_COLLISION = false;
 // Background stars
 const NUM_STARS = 10;
 
+// Default game params
+let level, currentAsteroidsArray, playerShip;
+// let currentAsteroidsArray = [];
+newGame();
+
 // Draw scene framerate times per second. (use requestanimationframe)
 // setInterval(updateCanvas, 1000 / FRAMERATE);
 
-// ==Player ship==
-// Default
-let playerShip = createNewPlayerShip(
-	canvas.width / 2,
-	canvas.height / 2,
-	SHIP_HEIGHT_PX / 2
-);
+function newGame() {
+	// ==Player ship==
+	// Default
+	playerShip = createNewPlayerShip(
+		canvas.width / 2,
+		canvas.height / 2,
+		SHIP_HEIGHT_PX / 2
+	);
+
+	newLevel();
+
+	function newLevel() {}
+
+	createAsteroidsArray();
+	// console.log('asteroids', currentAsteroidsArray);
+}
 
 function createNewPlayerShip(xPosition, yPosition, radius) {
 	// playerShip = {
@@ -142,7 +156,6 @@ function applyShipFriction() {
 }
 
 // ==Asteroids==
-let currentAsteroidsArray = [];
 
 function createNewAsteroid(x, y, radius) {
 	let asteroid = {
@@ -257,9 +270,6 @@ function handleAsteroidSplit(index) {
 	}
 	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
 }
-
-createAsteroidsArray();
-console.log('asteroids', currentAsteroidsArray);
 
 function updateCanvas() {
 	// Timer bool: player is losing. If countdown reaches 0, game over
