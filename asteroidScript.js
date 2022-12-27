@@ -48,9 +48,6 @@ let level, currentAsteroidsArray, playerShip;
 // let currentAsteroidsArray = [];
 newGame();
 
-// Draw scene framerate times per second. (use requestanimationframe)
-// setInterval(updateCanvas, 1000 / FRAMERATE);
-
 function newGame() {
 	// ==Player ship==
 	// Default
@@ -60,11 +57,14 @@ function newGame() {
 		SHIP_HEIGHT_PX / 2
 	);
 
+	level = 0;
+
 	newLevel();
 
-	function newLevel() {}
+	function newLevel() {
+		createAsteroidsArray();
+	}
 
-	createAsteroidsArray();
 	// console.log('asteroids', currentAsteroidsArray);
 }
 
@@ -158,6 +158,8 @@ function applyShipFriction() {
 // ==Asteroids==
 
 function createNewAsteroid(x, y, radius) {
+	let asteroidLevelModifier = 1 + 0.1 * level;
+
 	let asteroid = {
 		radius: radius,
 		// Each vertex 1 radius from center point
@@ -171,11 +173,14 @@ function createNewAsteroid(x, y, radius) {
 			x: x,
 			y: y,
 			// Velocities applied to each asteroid: if random value > .5, velocity applied to positive direction else negative direction
+			// Velocities increase with time as level increments
 			xVelocity:
-				((Math.random() * ASTEROID_SPEED_PX) / FRAMERATE) *
+				((Math.random() * ASTEROID_SPEED_PX * asteroidLevelModifier) /
+					FRAMERATE) *
 				(Math.random() < 0.5 ? 1 : -1),
 			yVelocity:
-				((Math.random() * ASTEROID_SPEED_PX) / FRAMERATE) *
+				((Math.random() * ASTEROID_SPEED_PX * asteroidLevelModifier) /
+					FRAMERATE) *
 				(Math.random() < 0.5 ? 1 : -1),
 			// Radian heading
 			angle: Math.random() * Math.PI * 2,
@@ -204,7 +209,8 @@ function createAsteroidsArray() {
 	// Empty
 	currentAsteroidsArray = [];
 	let asteroidX, asteroidY;
-	for (let i = 0; i < ASTEROIDS_NUMBER; i++) {
+	// Increase number of asteroids present with each level
+	for (let i = 0; i < ASTEROIDS_NUMBER + level; i++) {
 		// Generate asteroids within allowed space around player
 		do {
 			asteroidX = Math.floor(Math.random() * canvas.width);
@@ -235,7 +241,7 @@ function handleAsteroidSplit(index) {
 	let oldRadius = currentAsteroidsArray[index].radius;
 
 	// Asteroid possible to split
-	if (oldRadius > 0) {
+	if (oldRadius > 0 && currentAsteroidsArray.length !== 0) {
 		switch (true) {
 			case oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2):
 				// Replace with 2 smaller asteroids
@@ -265,20 +271,23 @@ function handleAsteroidSplit(index) {
 			// Fully destroyed
 			default:
 				currentAsteroidsArray.splice(index, 1);
+
 				break;
 		}
+	} else {
+		// Asteroids destroyed, make new harder ones
+		level++;
+		newLevel();
 	}
 	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
 }
 
 function updateCanvas() {
-	// Timer bool: player is losing. If countdown reaches 0, game over
+	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
 
 	// Player invulnerability signaled by blink on even intervals: draw ship
 	let playerBlinkingOn = playerShip.blinkingCount % 2 == 0;
-	// console.log(playerLossStateTime);
-	// console.log(playerShip.deathTimer);
 
 	// ==Draw Background: "space"==
 	ctx.fillStyle = 'black';
@@ -333,9 +342,8 @@ function updateCanvas() {
 			);
 		}
 		// Draw player shots
-		playerShip.currentShots.forEach((shot, index) => {
+		playerShip.currentShots.forEach((shot) => {
 			// Shot not in contact with object
-			// if (playerShip.currentShots[index].PLAYER_SHOT_CONTACT_TIME == 0) {
 			if (shot.contactTime == 0) {
 				// ctx.fillStyle = 'red';
 				ctx.strokeStyle = 'red';
@@ -356,8 +364,8 @@ function updateCanvas() {
 				ctx.fillStyle = 'red';
 				ctx.beginPath();
 				ctx.arc(
-					playerShip.currentShots[index].x,
-					playerShip.currentShots[index].y,
+					shot.x,
+					shot.y,
 					playerShip.radius * 0.75,
 					0,
 					Math.PI * 2,
@@ -368,8 +376,8 @@ function updateCanvas() {
 				ctx.fillStyle = 'orangered';
 				ctx.beginPath();
 				ctx.arc(
-					playerShip.currentShots[index].x,
-					playerShip.currentShots[index].y,
+					shot.x,
+					shot.y,
 					playerShip.radius * 0.5,
 					0,
 					Math.PI * 2,
@@ -380,8 +388,8 @@ function updateCanvas() {
 				ctx.fillStyle = 'orange';
 				ctx.beginPath();
 				ctx.arc(
-					playerShip.currentShots[index].x,
-					playerShip.currentShots[index].y,
+					shot.x,
+					shot.y,
 					playerShip.radius * 0.25,
 					0,
 					Math.PI * 2,
@@ -615,7 +623,7 @@ function updateCanvas() {
 
 			// Handle shot contact for animation
 			if (shot.contactTime > 0) {
-				//TODO Making contact
+				//Making contact
 				shot.contactTime--;
 				playerShip.currentShots.splice(shot, 1);
 			} else {
