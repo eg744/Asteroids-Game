@@ -27,7 +27,7 @@ const PLAYER_SHOT_SPEED_PX = 5;
 const PLAYER_SHOT_CONTACT_TIME = 0.02;
 
 // Default asteroid values
-const ASTEROIDS_NUMBER = 5;
+const ASTEROIDS_NUMBER = 1;
 const ASTEROIDS_SIZE_PX = 100;
 const ASTEROIDS_HEIGHT_PX = 30;
 const ASTEROID_SHAPE_VARIATION = 0.5;
@@ -38,11 +38,15 @@ const ASTEROID_SPEED_PX = 20;
 // Development values
 const SHOW_COLLISION = false;
 
+// Game text values
+const TEXT_FADE_TIME = 3;
+const TEXT_SIZE = 50;
+
 // Background stars
 const NUM_STARS = 10;
 
 // Default game params
-let level, currentAsteroidsArray, playerShip;
+let level, currentAsteroidsArray, playerShip, gameText, textAlpha;
 // let currentAsteroidsArray = [];
 newGame();
 
@@ -59,11 +63,12 @@ function newGame() {
 
 	newLevel();
 
-	function newLevel() {
-		createAsteroidsArray();
-	}
-
 	// console.log('asteroids', currentAsteroidsArray);
+}
+function newLevel() {
+	gameText = `Level ${level + 1}`;
+	textAlpha = 1.0;
+	createAsteroidsArray();
 }
 
 function createNewPlayerShip(xPosition, yPosition, radius) {
@@ -239,7 +244,7 @@ function handleAsteroidSplit(index) {
 	let oldRadius = currentAsteroidsArray[index].radius;
 
 	// Asteroid possible to split
-	if (oldRadius > 0 && currentAsteroidsArray.length !== 0) {
+	if (oldRadius > 0) {
 		switch (true) {
 			case oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2):
 				// Replace with 2 smaller asteroids
@@ -272,7 +277,9 @@ function handleAsteroidSplit(index) {
 
 				break;
 		}
-	} else {
+		console.log('asteroidlen' + currentAsteroidsArray.length);
+	}
+	if (currentAsteroidsArray.length == 0) {
 		// Asteroids destroyed, make new harder ones
 		level++;
 		newLevel();
@@ -280,6 +287,7 @@ function handleAsteroidSplit(index) {
 	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
 }
 
+// ==Update each frame==
 function updateCanvas() {
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
@@ -718,6 +726,13 @@ function updateCanvas() {
 			ctx.stroke();
 		}
 	});
+
+	// Draw on screen text
+	if (textAlpha >= 0) {
+		ctx.fillStyle = `rgba(255,255,255,${textAlpha}) `;
+		ctx.font = `bold ${TEXT_SIZE} Courier New`;
+		ctx.fillText(gameText, canvas.width / 2, canvas.height * 0.1);
+	}
 
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
