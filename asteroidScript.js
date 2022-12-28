@@ -3,8 +3,6 @@ const ctx = canvas.getContext('2d');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-// canvas.width = '500';
-// canvas.height = '700';
 
 // ==Globals==
 const FRAMERATE = 60;
@@ -552,7 +550,6 @@ function updateCanvas() {
 		playerShip.deathTimer--;
 		if (playerShip.deathTimer == 0) {
 			updateShipDeathState();
-			// console.log('deathtime', playerShip.deathTimer);
 
 			playerShip = createNewPlayerShip(
 				canvas.width / 2,
@@ -595,22 +592,6 @@ function updateCanvas() {
 			playerShip.currentShots.splice(i, 1);
 		}
 
-		// 	if (playerShip.currentShots[i].contactTime > 0) {
-		// 		//TODO Making contact
-		// 		playerShip.currentShots[i].contactTime--;
-		// 		playerShip.currentShots.splice(i, 1);
-		// 		continue;
-		// 	} else {
-		// 		// Move shot
-		// 		// shot.x += shot.xVelocity * 2;
-		// 		// shot.y += shot.yVelocity * 2;
-		// 		playerShip.currentShots[i].x +=
-		// 			playerShip.currentShots[i].xVelocity * FRAMERATE;
-		// 		playerShip.currentShots[i].y +=
-		// 			playerShip.currentShots[i].yVelocity * FRAMERATE;
-		// 	}
-		// }
-
 		// Handle shot contact for animation
 		playerShip.currentShots.forEach((shot) => {
 			console.log('shot contact', shot.contactTime);
@@ -628,8 +609,6 @@ function updateCanvas() {
 				playerShip.currentShots.splice(shot, 1);
 			} else {
 				// Move shot
-				// shot.x += shot.xVelocity * 2;
-				// shot.y += shot.yVelocity * 2;
 				shot.x += shot.xVelocity * FRAMERATE;
 				shot.y += shot.yVelocity * FRAMERATE;
 			}
