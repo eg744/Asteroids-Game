@@ -40,7 +40,7 @@ const SHOW_COLLISION = false;
 
 // Game text values
 const TEXT_FADE_TIME = 3;
-const TEXT_SIZE = 50;
+const TEXT_SIZE = 30;
 
 // Background stars
 const NUM_STARS = 10;
@@ -66,7 +66,7 @@ function newGame() {
 	// console.log('asteroids', currentAsteroidsArray);
 }
 function newLevel() {
-	gameText = `Level ${level + 1}`;
+	gameLevelText = `Level ${level + 1}`;
 	textAlpha = 1.0;
 	createAsteroidsArray();
 }
@@ -119,6 +119,31 @@ function createNewPlayerShip(xPosition, yPosition, radius) {
 			y: 0,
 		},
 	};
+}
+
+// Values for player to be drawn on canvas
+function drawPlayerShip(x, y, angle) {
+	ctx.strokeStyle = 'white';
+	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+	ctx.beginPath();
+
+	// Head
+	ctx.moveTo(
+		x + playerShip.radius * Math.cos(angle),
+		y - playerShip.radius * Math.sin(angle)
+	);
+	// Rear left
+	ctx.lineTo(
+		x - playerShip.radius * (Math.cos(angle) + Math.sin(angle)),
+		y + playerShip.radius * (Math.sin(angle) - Math.cos(angle))
+	);
+	// Rear right
+	ctx.lineTo(
+		x - playerShip.radius * (Math.cos(angle) - Math.sin(angle)),
+		y + playerShip.radius * (Math.sin(angle) + Math.cos(angle))
+	);
+	ctx.closePath();
+	ctx.stroke();
 }
 
 // ==Shooting==
@@ -277,14 +302,12 @@ function handleAsteroidSplit(index) {
 
 				break;
 		}
-		console.log('asteroidlen' + currentAsteroidsArray.length);
 	}
+	// Asteroids destroyed, make new harder ones
 	if (currentAsteroidsArray.length == 0) {
-		// Asteroids destroyed, make new harder ones
 		level++;
 		newLevel();
 	}
-	console.log('oldradius', oldRadius, 'ht', Math.ceil(ASTEROIDS_SIZE_PX / 2));
 }
 
 // ==Update each frame==
@@ -302,41 +325,46 @@ function updateCanvas() {
 	// ==Draw Player Ship: (triangle) while player alive==
 	if (!playerLossStateTime) {
 		if (playerBlinkingOn) {
-			ctx.strokeStyle = 'white';
-			ctx.lineWidth = SHIP_HEIGHT_PX / 20;
-			ctx.beginPath();
+			drawPlayerShip(
+				playerShip.position.x,
+				playerShip.position.y,
+				playerShip.position.angle
+			);
+			// ctx.strokeStyle = 'white';
+			// ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+			// ctx.beginPath();
 
-			// Head
-			ctx.moveTo(
-				playerShip.position.x +
-					playerShip.radius * Math.cos(playerShip.position.angle),
-				playerShip.position.y -
-					playerShip.radius * Math.sin(playerShip.position.angle)
-			);
-			// Rear left
-			ctx.lineTo(
-				playerShip.position.x -
-					playerShip.radius *
-						(Math.cos(playerShip.position.angle) +
-							Math.sin(playerShip.position.angle)),
-				playerShip.position.y +
-					playerShip.radius *
-						(Math.sin(playerShip.position.angle) -
-							Math.cos(playerShip.position.angle))
-			);
-			// Rear right
-			ctx.lineTo(
-				playerShip.position.x -
-					playerShip.radius *
-						(Math.cos(playerShip.position.angle) -
-							Math.sin(playerShip.position.angle)),
-				playerShip.position.y +
-					playerShip.radius *
-						(Math.sin(playerShip.position.angle) +
-							Math.cos(playerShip.position.angle))
-			);
-			ctx.closePath();
-			ctx.stroke();
+			// // Head
+			// ctx.moveTo(
+			// 	playerShip.position.x +
+			// 		playerShip.radius * Math.cos(playerShip.position.angle),
+			// 	playerShip.position.y -
+			// 		playerShip.radius * Math.sin(playerShip.position.angle)
+			// );
+			// // Rear left
+			// ctx.lineTo(
+			// 	playerShip.position.x -
+			// 		playerShip.radius *
+			// 			(Math.cos(playerShip.position.angle) +
+			// 				Math.sin(playerShip.position.angle)),
+			// 	playerShip.position.y +
+			// 		playerShip.radius *
+			// 			(Math.sin(playerShip.position.angle) -
+			// 				Math.cos(playerShip.position.angle))
+			// );
+			// // Rear right
+			// ctx.lineTo(
+			// 	playerShip.position.x -
+			// 		playerShip.radius *
+			// 			(Math.cos(playerShip.position.angle) -
+			// 				Math.sin(playerShip.position.angle)),
+			// 	playerShip.position.y +
+			// 		playerShip.radius *
+			// 			(Math.sin(playerShip.position.angle) +
+			// 				Math.cos(playerShip.position.angle))
+			// );
+			// ctx.closePath();
+			// ctx.stroke();
 
 			// dot cockpit
 			ctx.fillStyle = 'white';
@@ -585,6 +613,15 @@ function updateCanvas() {
 		playerShip.position.y = 0 - playerShip.radius;
 	}
 
+	// Draw player lives
+	for (let i = 0; i < playerShip.lives; i++) {
+		drawPlayerShip(
+			SHIP_HEIGHT_PX + i * SHIP_HEIGHT_PX * 1.2,
+			SHIP_HEIGHT_PX,
+			0.5 * Math.PI
+		);
+	}
+
 	// Player shot movement
 	for (let i = 0; i < playerShip.currentShots.length; i++) {
 		// Remove shots as they exit play area
@@ -730,8 +767,12 @@ function updateCanvas() {
 	// Draw on screen text
 	if (textAlpha >= 0) {
 		ctx.fillStyle = `rgba(255,255,255,${textAlpha}) `;
-		ctx.font = `bold ${TEXT_SIZE} Courier New`;
-		ctx.fillText(gameText, canvas.width / 2, canvas.height * 0.1);
+		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+		// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
+
+		ctx.fillText(gameLevelText, canvas.width / 2, canvas.height * 0.1);
+		// Fadeout text
+		textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
 	}
 
 	// Animate recursively
