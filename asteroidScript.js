@@ -19,6 +19,7 @@ const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
+const SHIP_LIVES_DEFAULT = 3;
 
 // Player ship shot values
 const PLAYER_SHOTS_MAX = 10;
@@ -27,7 +28,7 @@ const PLAYER_SHOT_SPEED_PX = 5;
 const PLAYER_SHOT_CONTACT_TIME = 0.02;
 
 // Default asteroid values
-const ASTEROIDS_NUMBER = 1;
+const ASTEROIDS_NUMBER = 5;
 const ASTEROIDS_SIZE_PX = 100;
 const ASTEROIDS_HEIGHT_PX = 30;
 const ASTEROID_SHAPE_VARIATION = 0.5;
@@ -39,14 +40,14 @@ const ASTEROID_SPEED_PX = 20;
 const SHOW_COLLISION = false;
 
 // Game text values
-const TEXT_FADE_TIME = 3;
+const TEXT_FADE_TIME = 6;
 const TEXT_SIZE = 30;
 
 // Background stars
 const NUM_STARS = 10;
 
 // Default game params
-let level, currentAsteroidsArray, playerShip, gameText, textAlpha;
+let level, currentAsteroidsArray, playerShip, lives, gameText, textAlpha;
 // let currentAsteroidsArray = [];
 newGame();
 
@@ -56,10 +57,12 @@ function newGame() {
 	playerShip = createNewPlayerShip(
 		canvas.width / 2,
 		canvas.height / 2,
-		SHIP_HEIGHT_PX / 2
+		SHIP_HEIGHT_PX / 2,
+		SHIP_LIVES_DEFAULT
 	);
 
 	level = 0;
+	// lives = SHIP_LIVES_DEFAULT;
 
 	newLevel();
 
@@ -71,7 +74,7 @@ function newLevel() {
 	createAsteroidsArray();
 }
 
-function createNewPlayerShip(xPosition, yPosition, radius) {
+function createNewPlayerShip(xPosition, yPosition, radius, lives, shipColor) {
 	// playerShip = {
 	// 	radius: SHIP_HEIGHT_PX / 2,
 	// 	isAlive: true,
@@ -96,7 +99,7 @@ function createNewPlayerShip(xPosition, yPosition, radius) {
 	return {
 		radius: radius,
 		isAlive: true,
-		lives: 33,
+		lives: lives,
 		deathTimer: 0,
 		blinkingTime: Math.ceil(SHIP_BLINK_TIME * FRAMERATE),
 		blinkingCount: Math.ceil(SHIP_INVULNERABLE_TIME / SHIP_BLINK_TIME),
@@ -122,8 +125,8 @@ function createNewPlayerShip(xPosition, yPosition, radius) {
 }
 
 // Values for player to be drawn on canvas
-function drawPlayerShip(x, y, angle) {
-	ctx.strokeStyle = 'white';
+function drawPlayerShip(x, y, angle, playerColor = 'white') {
+	ctx.strokeStyle = playerColor;
 	ctx.lineWidth = SHIP_HEIGHT_PX / 20;
 	ctx.beginPath();
 
@@ -178,6 +181,11 @@ function playerShot() {
 function updateShipDeathState() {
 	playerShip.deathTimer = Math.ceil(SHIP_DEATH_TIME * FRAMERATE);
 }
+
+function handleGameOver() {
+	console.log('game over!');
+}
+
 function applyShipFriction() {
 	playerShip.thrust.x -= (FRICTION * playerShip.thrust.x) / FRAMERATE;
 	playerShip.thrust.y -= (FRICTION * playerShip.thrust.y) / FRAMERATE;
@@ -583,15 +591,20 @@ function updateCanvas() {
 			applyShipFriction();
 		}
 	} else {
+		// Handle ship life logic
 		playerShip.deathTimer--;
 		if (playerShip.deathTimer == 0) {
 			updateShipDeathState();
-
-			playerShip = createNewPlayerShip(
-				canvas.width / 2,
-				canvas.height / 2,
-				SHIP_HEIGHT_PX / 2
-			);
+			if (playerShip.lives == 0) {
+				handleGameOver();
+			} else {
+				playerShip = createNewPlayerShip(
+					canvas.width / 2,
+					canvas.height / 2,
+					SHIP_HEIGHT_PX / 2,
+					playerShip.lives - 1
+				);
+			}
 		}
 		applyShipFriction();
 	}
@@ -614,11 +627,17 @@ function updateCanvas() {
 	}
 
 	// Draw player lives
+	let playerDamagedColor;
 	for (let i = 0; i < playerShip.lives; i++) {
+		// Visual indication ship takes damage, life is red
+		playerDamagedColor =
+			playerLossStateTime && i == playerShip.lives - 1 ? 'red' : 'white';
+		// console.log('pldamg', playerDamagedColor);
 		drawPlayerShip(
 			SHIP_HEIGHT_PX + i * SHIP_HEIGHT_PX * 1.2,
 			SHIP_HEIGHT_PX,
-			0.5 * Math.PI
+			0.5 * Math.PI,
+			playerDamagedColor
 		);
 	}
 
@@ -770,7 +789,7 @@ function updateCanvas() {
 		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
 		// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
 
-		ctx.fillText(gameLevelText, canvas.width / 2, canvas.height * 0.1);
+		ctx.fillText(gameLevelText, canvas.width / 2.75, canvas.height * 0.1);
 		// Fadeout text
 		textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
 	}
