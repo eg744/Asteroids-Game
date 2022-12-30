@@ -19,7 +19,7 @@ const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
-const SHIP_LIVES_DEFAULT = 3;
+const SHIP_LIVES_DEFAULT = 33;
 
 // Player ship shot values
 const PLAYER_SHOTS_MAX = 10;
@@ -296,10 +296,10 @@ function handleAsteroidSplit(index) {
 				currentAsteroidsArray.splice(index, 1);
 
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
+					createNewAsteroid(asteroidX, asteroidY, oldRadius / 3)
 				);
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 4)
+					createNewAsteroid(asteroidX, asteroidY, oldRadius / 3)
 				);
 
 				break;
