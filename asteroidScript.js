@@ -19,7 +19,7 @@ const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
-const SHIP_LIVES_DEFAULT = 33;
+const SHIP_LIVES_DEFAULT = 2;
 
 // Player ship shot values
 const PLAYER_SHOTS_MAX = 10;
@@ -46,10 +46,40 @@ const TEXT_SIZE = 30;
 // Background stars
 const NUM_STARS = 10;
 
+// Start screen initial state
+ctx.fillStyle = 'black';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 // Default game params
-let level, currentAsteroidsArray, playerShip, lives, gameText, textAlpha;
+let level,
+	currentAsteroidsArray,
+	playerShip,
+	lives,
+	gameStartText,
+	gameStateText,
+	gameLevelText,
+	textAlpha;
 // let currentAsteroidsArray = [];
-newGame();
+
+function onScreenText(text, alpha) {
+	return {
+		text: text,
+		textAlpha: alpha,
+	};
+}
+function startText() {
+	gameStartText = onScreenText('Click to start');
+
+	ctx.fillStyle = `rgb(255,255,255) `;
+	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+	// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
+
+	ctx.fillText(gameStartText.text, canvas.width / 2.75, canvas.height * 0.1);
+}
+startText();
+
+// Call newgame(onclick)
+// newGame();
 
 function newGame() {
 	// ==Player ship==
@@ -69,12 +99,11 @@ function newGame() {
 	// console.log('asteroids', currentAsteroidsArray);
 }
 function newLevel() {
-	gameLevelText = `Level ${level + 1}`;
-	textAlpha = 1.0;
+	gameLevelText = onScreenText(`Level ${level + 1}`, 1.0);
 	createAsteroidsArray();
 }
 
-function createNewPlayerShip(xPosition, yPosition, radius, lives, shipColor) {
+function createNewPlayerShip(xPosition, yPosition, radius, lives) {
 	// playerShip = {
 	// 	radius: SHIP_HEIGHT_PX / 2,
 	// 	isAlive: true,
@@ -183,7 +212,16 @@ function updateShipDeathState() {
 }
 
 function handleGameOver() {
-	console.log('game over!');
+	playerShip.isAlive = false;
+	gameStateText = onScreenText('Game Over!', 0);
+
+	ctx.fillStyle = `rgb(255,255,255) `;
+	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+	// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
+
+	ctx.fillText(gameStateText.text, canvas.width / 2.75, canvas.height * 0.1);
+	// textAlpha = 1.0;
+	document.addEventListener('click', handleGameStart);
 }
 
 function applyShipFriction() {
@@ -694,14 +732,12 @@ function updateCanvas() {
 				) < currentAsteroidsArray[i].radius
 			) {
 				// Remove shot: free space for shots on screen
-				// playerShip.currentShots.splice(j, 1);
 
 				// Break/destroy asteroid and show collision with laser
 				handleAsteroidSplit(i);
 				playerShip.currentShots[j].contactTime = Math.ceil(
 					PLAYER_SHOT_CONTACT_TIME * FRAMERATE
 				);
-				// currentAsteroidsArray.splice(i, 1);
 				break;
 			}
 		}
@@ -784,21 +820,25 @@ function updateCanvas() {
 	});
 
 	// Draw on screen text
-	if (textAlpha >= 0) {
-		ctx.fillStyle = `rgba(255,255,255,${textAlpha}) `;
+	if (gameLevelText.textAlpha >= 0) {
+		ctx.fillStyle = `rgba(255,255,255,${gameLevelText.textAlpha}) `;
 		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
 		// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
 
-		ctx.fillText(gameLevelText, canvas.width / 2.75, canvas.height * 0.1);
+		ctx.fillText(
+			gameLevelText.text,
+			canvas.width / 2.75,
+			canvas.height * 0.1
+		);
 		// Fadeout text
-		textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
+		gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
 	}
 
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
 }
 // Call function when using requestanimationframe
-updateCanvas();
+// updateCanvas();
 
 function populateStars() {
 	ctx.fillStyle = 'white';
@@ -843,6 +883,15 @@ window.addEventListener('resize', debounce(resizeCanvas), false);
 
 document.addEventListener('keydown', keyDownAction);
 document.addEventListener('keyup', keyUpAction);
+document.addEventListener('click', handleGameStart);
+
+// Game start, restart
+function handleGameStart(event) {
+	// TODO: game speed increases on subsequent restarts (call of update canvas), set base values to compare when starting new game
+	newGame();
+	updateCanvas();
+	document.removeEventListener('click', handleGameStart);
+}
 
 // Moving, rotating ship
 function keyDownAction(event) {
