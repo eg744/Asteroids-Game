@@ -36,6 +36,11 @@ const ASTEROIDS_VERTEX_AVG = 10;
 // Max acceleration per second
 const ASTEROID_SPEED_PX = 20;
 
+// Asteroid point values
+const ASTEROID_POINTS_LARGE = 5;
+const ASTEROID_POINTS_MEDIUM = 8;
+const ASTEROID_POINTS_SMALL = 10;
+
 // Development values
 const SHOW_COLLISION = false;
 
@@ -224,7 +229,7 @@ function applyShipFriction() {
 
 // ==Asteroids==
 
-function createNewAsteroid(x, y, radius) {
+function createNewAsteroid(x, y, radius, size) {
 	let asteroidLevelModifier = 1 + 0.1 * level;
 
 	let asteroid = {
@@ -252,6 +257,7 @@ function createNewAsteroid(x, y, radius) {
 			// Radian heading
 			angle: Math.random() * Math.PI * 2,
 		},
+		size: size,
 	};
 
 	// Vertex offsets: random multiplier to radius (between default and 2 * radius)
@@ -296,7 +302,8 @@ function createAsteroidsArray() {
 			createNewAsteroid(
 				asteroidX,
 				asteroidY,
-				Math.ceil(ASTEROIDS_SIZE_PX / 2)
+				Math.ceil(ASTEROIDS_SIZE_PX / 2),
+				'large'
 			)
 		);
 	}
@@ -315,10 +322,20 @@ function handleAsteroidSplit(index) {
 				currentAsteroidsArray.splice(index, 1);
 
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 2)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 2,
+						'medium'
+					)
 				);
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 2)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 2,
+						'medium'
+					)
 				);
 
 				break;
@@ -327,10 +344,20 @@ function handleAsteroidSplit(index) {
 				currentAsteroidsArray.splice(index, 1);
 
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 3)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 3,
+						'small'
+					)
 				);
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 3)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 3,
+						'small'
+					)
 				);
 
 				break;
