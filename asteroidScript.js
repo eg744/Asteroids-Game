@@ -19,7 +19,7 @@ const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
-const SHIP_LIVES_DEFAULT = 2;
+const SHIP_LIVES_DEFAULT = 1;
 
 // Player ship shot values
 const PLAYER_SHOTS_MAX = 10;
@@ -35,6 +35,11 @@ const ASTEROID_SHAPE_VARIATION = 0.5;
 const ASTEROIDS_VERTEX_AVG = 10;
 // Max acceleration per second
 const ASTEROID_SPEED_PX = 20;
+
+// Asteroid point values
+const ASTEROID_POINTS_LARGE = 5;
+const ASTEROID_POINTS_MEDIUM = 8;
+const ASTEROID_POINTS_SMALL = 10;
 
 // Development values
 const SHOW_COLLISION = false;
@@ -56,7 +61,7 @@ let level,
 	playerShip,
 	lives,
 	gameStartText,
-	gameStateText,
+	// gameStateText,
 	gameLevelText,
 	textAlpha;
 // let currentAsteroidsArray = [];
@@ -213,14 +218,7 @@ function updateShipDeathState() {
 
 function handleGameOver() {
 	playerShip.isAlive = false;
-	gameStateText = onScreenText('Game Over!', 0);
 
-	ctx.fillStyle = `rgb(255,255,255) `;
-	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-	// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
-
-	ctx.fillText(gameStateText.text, canvas.width / 2.75, canvas.height * 0.1);
-	// textAlpha = 1.0;
 	document.addEventListener('click', handleGameStart);
 }
 
@@ -231,7 +229,7 @@ function applyShipFriction() {
 
 // ==Asteroids==
 
-function createNewAsteroid(x, y, radius) {
+function createNewAsteroid(x, y, radius, size) {
 	let asteroidLevelModifier = 1 + 0.1 * level;
 
 	let asteroid = {
@@ -259,6 +257,7 @@ function createNewAsteroid(x, y, radius) {
 			// Radian heading
 			angle: Math.random() * Math.PI * 2,
 		},
+		size: size,
 	};
 
 	// Vertex offsets: random multiplier to radius (between default and 2 * radius)
@@ -303,7 +302,8 @@ function createAsteroidsArray() {
 			createNewAsteroid(
 				asteroidX,
 				asteroidY,
-				Math.ceil(ASTEROIDS_SIZE_PX / 2)
+				Math.ceil(ASTEROIDS_SIZE_PX / 2),
+				'large'
 			)
 		);
 	}
@@ -322,10 +322,20 @@ function handleAsteroidSplit(index) {
 				currentAsteroidsArray.splice(index, 1);
 
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 2)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 2,
+						'medium'
+					)
 				);
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 2)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 2,
+						'medium'
+					)
 				);
 
 				break;
@@ -334,10 +344,20 @@ function handleAsteroidSplit(index) {
 				currentAsteroidsArray.splice(index, 1);
 
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 3)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 3,
+						'small'
+					)
 				);
 				currentAsteroidsArray.push(
-					createNewAsteroid(asteroidX, asteroidY, oldRadius / 3)
+					createNewAsteroid(
+						asteroidX,
+						asteroidY,
+						oldRadius / 3,
+						'small'
+					)
 				);
 
 				break;
@@ -369,7 +389,7 @@ function updateCanvas() {
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	// ==Draw Player Ship: (triangle) while player alive==
-	if (!playerLossStateTime) {
+	if (!playerLossStateTime && playerShip.isAlive) {
 		if (playerBlinkingOn) {
 			drawPlayerShip(
 				playerShip.position.x,
@@ -568,7 +588,11 @@ function updateCanvas() {
 		playerShip.position.angle += playerShip.position.rotation;
 
 		// Ship thrust state
-		if (playerShip.shipThrusting && playerBlinkingOn) {
+		if (
+			playerShip.shipThrusting &&
+			playerBlinkingOn &&
+			playerShip.isAlive
+		) {
 			// Accelerate along cos (X of ship's angle)
 			playerShip.thrust.x +=
 				(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
@@ -729,7 +753,8 @@ function updateCanvas() {
 					currentAsteroidsArray[i].position.y,
 					playerShip.currentShots[j].x,
 					playerShip.currentShots[j].y
-				) < currentAsteroidsArray[i].radius
+				) < currentAsteroidsArray[i].radius &&
+				playerShip.isAlive
 			) {
 				// Remove shot: free space for shots on screen
 
@@ -820,10 +845,9 @@ function updateCanvas() {
 	});
 
 	// Draw on screen text
-	if (gameLevelText.textAlpha >= 0) {
+	if (gameLevelText.textAlpha >= 0 && playerShip.isAlive) {
 		ctx.fillStyle = `rgba(255,255,255,${gameLevelText.textAlpha}) `;
 		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-		// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
 
 		ctx.fillText(
 			gameLevelText.text,
@@ -831,7 +855,18 @@ function updateCanvas() {
 			canvas.height * 0.1
 		);
 		// Fadeout text
-		gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
+		// gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
+	} else if (!playerShip.isAlive) {
+		let gameStateText = onScreenText('Game Over!');
+
+		ctx.fillStyle = `rgb(255,255,255) `;
+		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+
+		ctx.fillText(
+			gameStateText.text,
+			canvas.width / 2.75,
+			canvas.height * 0.1
+		);
 	}
 
 	// Animate recursively
@@ -895,6 +930,9 @@ function handleGameStart(event) {
 
 // Moving, rotating ship
 function keyDownAction(event) {
+	if (!playerShip.isAlive) {
+		return;
+	}
 	// console.log(event);
 	switch (event.keyCode) {
 		// Space: shoot
@@ -928,6 +966,9 @@ function keyDownAction(event) {
 }
 
 function keyUpAction(event) {
+	if (!playerShip.isAlive) {
+		return;
+	}
 	// Stop actions
 	switch (event.keyCode) {
 		case 32:
