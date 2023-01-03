@@ -63,6 +63,7 @@ let level,
 	gameStartText,
 	// gameStateText,
 	gameLevelText,
+	currentPoints,
 	textAlpha;
 // let currentAsteroidsArray = [];
 
@@ -83,6 +84,20 @@ function startText() {
 }
 startText();
 
+function playerPointsText() {
+	playerScoreText = onScreenText(`${currentPoints} points`);
+
+	ctx.fillStyle = `rgb(255,255,255) `;
+	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+	// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
+
+	ctx.fillText(
+		playerScoreText.text,
+		canvas.width / 3.75,
+		canvas.height * 0.1
+	);
+}
+
 // Call newgame(onclick)
 // newGame();
 
@@ -97,7 +112,7 @@ function newGame() {
 	);
 
 	level = 0;
-	// lives = SHIP_LIVES_DEFAULT;
+	currentPoints = 0;
 
 	newLevel();
 
@@ -227,6 +242,31 @@ function applyShipFriction() {
 	playerShip.thrust.y -= (FRICTION * playerShip.thrust.y) / FRAMERATE;
 }
 
+function calculatePlayerScore(asteroidSize) {
+	if (
+		currentPoints > Number.MIN_SAFE_INTEGER ||
+		currentPoints < Number.MAX_SAFE_INTEGER
+	) {
+		switch (asteroidSize) {
+			case 'large':
+				currentPoints += ASTEROID_POINTS_LARGE;
+
+				break;
+			case 'medium':
+				currentPoints += ASTEROID_POINTS_MEDIUM;
+
+				break;
+			case 'small':
+				currentPoints += ASTEROID_POINTS_SMALL;
+
+				break;
+
+			default:
+				break;
+		}
+	}
+}
+
 // ==Asteroids==
 
 function createNewAsteroid(x, y, radius, size) {
@@ -313,11 +353,14 @@ function handleAsteroidSplit(index) {
 	let asteroidX = currentAsteroidsArray[index].position.x;
 	let asteroidY = currentAsteroidsArray[index].position.y;
 	let oldRadius = currentAsteroidsArray[index].radius;
+	let asteroidSize = currentAsteroidsArray[index].size;
+	console.log('assize', asteroidSize);
 
 	// Asteroid possible to split
 	if (oldRadius > 0) {
 		switch (true) {
 			case oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 2):
+				calculatePlayerScore(asteroidSize);
 				// Replace with 2 smaller asteroids
 				currentAsteroidsArray.splice(index, 1);
 
@@ -341,6 +384,7 @@ function handleAsteroidSplit(index) {
 				break;
 
 			case oldRadius == Math.ceil(ASTEROIDS_SIZE_PX / 4):
+				calculatePlayerScore(asteroidSize);
 				currentAsteroidsArray.splice(index, 1);
 
 				currentAsteroidsArray.push(
@@ -364,6 +408,7 @@ function handleAsteroidSplit(index) {
 
 			// Fully destroyed
 			default:
+				calculatePlayerScore(asteroidSize);
 				currentAsteroidsArray.splice(index, 1);
 
 				break;
@@ -868,6 +913,7 @@ function updateCanvas() {
 			canvas.height * 0.1
 		);
 	}
+	playerPointsText();
 
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
