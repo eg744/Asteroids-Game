@@ -68,6 +68,8 @@ let level,
 // let currentAsteroidsArray = [];
 
 function onScreenText(text, alpha) {
+	// ctx.fillStyle = `rgb(255,255,255) `;
+	// ctx.font = `bold ${TEXT_SIZE}px Courier New`;
 	return {
 		text: text,
 		textAlpha: alpha,
@@ -78,7 +80,6 @@ function startText() {
 
 	ctx.fillStyle = `rgb(255,255,255) `;
 	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-	// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
 
 	ctx.fillText(gameStartText.text, canvas.width / 2.75, canvas.height * 0.1);
 }
@@ -89,11 +90,10 @@ function playerPointsText() {
 
 	ctx.fillStyle = `rgb(255,255,255) `;
 	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-	// ctx.font = 'bold' + TEXT_SIZE + 'Courier New';
 
 	ctx.fillText(
 		playerScoreText.text,
-		canvas.width / 3.75,
+		canvas.width * 0.75,
 		canvas.height * 0.1
 	);
 }
@@ -889,7 +889,7 @@ function updateCanvas() {
 		}
 	});
 
-	// Draw on screen text
+	// Draw on screen level text
 	if (gameLevelText.textAlpha >= 0 && playerShip.isAlive) {
 		ctx.fillStyle = `rgba(255,255,255,${gameLevelText.textAlpha}) `;
 		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
