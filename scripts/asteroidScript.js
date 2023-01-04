@@ -1,3 +1,5 @@
+// import { startText, playerPointsText } from './scoring.js';
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -48,6 +50,9 @@ const SHOW_COLLISION = false;
 const TEXT_FADE_TIME = 6;
 const TEXT_SIZE = 30;
 
+// Localstorage save key
+const LOCAL_HIGH_SCORE = 'highScore';
+
 // Background stars
 const NUM_STARS = 10;
 
@@ -61,6 +66,9 @@ let level,
 	playerShip,
 	lives,
 	gameStartText,
+	playerScoreText,
+	playerHighScore,
+	highScoreText,
 	// gameStateText,
 	gameLevelText,
 	currentPoints,
@@ -83,7 +91,6 @@ function startText() {
 
 	ctx.fillText(gameStartText.text, canvas.width / 2.75, canvas.height * 0.1);
 }
-startText();
 
 function playerPointsText() {
 	playerScoreText = onScreenText(`${currentPoints} points`);
@@ -96,6 +103,15 @@ function playerPointsText() {
 		canvas.width * 0.75,
 		canvas.height * 0.1
 	);
+}
+
+function playerHighScoreText() {
+	highScoreText = onScreenText(`High Score: ${playerHighScore} points`);
+
+	ctx.fillStyle = `rgb(255,255,255) `;
+	ctx.font = `bold ${TEXT_SIZE * 0.5}px Courier New`;
+
+	ctx.fillText(highScoreText.text, canvas.width * 0.75, canvas.height * 0.9);
 }
 
 // Call newgame(onclick)
@@ -113,6 +129,12 @@ function newGame() {
 
 	level = 0;
 	currentPoints = 0;
+	let initialHighScore = localStorage.getItem(LOCAL_HIGH_SCORE);
+	if (initialHighScore == null) {
+		playerHighScore = 0;
+	} else {
+		playerHighScore = parseInt(initialHighScore);
+	}
 
 	newLevel();
 
@@ -122,6 +144,7 @@ function newLevel() {
 	gameLevelText = onScreenText(`Level ${level + 1}`, 1.0);
 	createAsteroidsArray();
 }
+startText();
 
 function createNewPlayerShip(xPosition, yPosition, radius, lives) {
 	// playerShip = {
@@ -263,6 +286,11 @@ function calculatePlayerScore(asteroidSize) {
 
 			default:
 				break;
+		}
+		if (currentPoints > playerHighScore) {
+			playerHighScore = currentPoints;
+			// Save user's high score with localstorage
+			localStorage.setItem(LOCAL_HIGH_SCORE, playerHighScore);
 		}
 	}
 }
@@ -900,7 +928,7 @@ function updateCanvas() {
 			canvas.height * 0.1
 		);
 		// Fadeout text
-		// gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / FRAMERATE;
+		gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / (FRAMERATE * 2);
 	} else if (!playerShip.isAlive) {
 		let gameStateText = onScreenText('Game Over!');
 
@@ -914,6 +942,7 @@ function updateCanvas() {
 		);
 	}
 	playerPointsText();
+	playerHighScoreText();
 
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
