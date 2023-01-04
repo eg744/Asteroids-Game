@@ -54,7 +54,7 @@ const TEXT_SIZE = 30;
 const LOCAL_HIGH_SCORE = 'highScore';
 
 // Background stars
-const NUM_STARS = 10;
+const NUM_STARS = 100;
 
 // Start screen initial state
 ctx.fillStyle = 'black';
@@ -65,7 +65,6 @@ let level,
 	currentAsteroidsArray,
 	playerShip,
 	lives,
-	gameStartText,
 	playerScoreText,
 	playerHighScore,
 	highScoreText,
@@ -76,20 +75,67 @@ let level,
 // let currentAsteroidsArray = [];
 
 function onScreenText(text, alpha) {
-	// ctx.fillStyle = `rgb(255,255,255) `;
-	// ctx.font = `bold ${TEXT_SIZE}px Courier New`;
 	return {
 		text: text,
 		textAlpha: alpha,
 	};
 }
 function startText() {
-	gameStartText = onScreenText('Click to start');
+	// Give flourish (Ship drawn = A in Asteroids. I know it's not perfect)
+	const aShip = () => {
+		ctx.save();
+		ctx.translate(canvas.width * 0.372, canvas.height * 0.152);
+
+		ctx.strokeStyle = 'white';
+		ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+		ctx.beginPath();
+
+		// Head
+		ctx.moveTo(
+			// canvas.width * 0.2 + (SHIP_HEIGHT_PX / 2) * Math.cos(0.5 * Math.PI),
+			// canvas.height * 0.2 - (SHIP_HEIGHT_PX / 2) * Math.sin(0.5 * Math.PI)
+
+			SHIP_HEIGHT_PX + (SHIP_HEIGHT_PX / 2) * Math.cos(0.5 * Math.PI),
+			SHIP_HEIGHT_PX - (SHIP_HEIGHT_PX / 2) * Math.sin(0.5 * Math.PI)
+		);
+
+		// Rear left
+		ctx.lineTo(
+			SHIP_HEIGHT_PX -
+				(SHIP_HEIGHT_PX / 2) *
+					(Math.cos(0.5 * Math.PI) + Math.sin(0.5 * Math.PI)),
+			SHIP_HEIGHT_PX +
+				(SHIP_HEIGHT_PX / 2) *
+					(Math.sin(0.5 * Math.PI) - Math.cos(0.5 * Math.PI))
+		);
+		// Rear right
+		ctx.lineTo(
+			SHIP_HEIGHT_PX -
+				(SHIP_HEIGHT_PX / 2) *
+					(Math.cos(0.5 * Math.PI) - Math.sin(0.5 * Math.PI)),
+			SHIP_HEIGHT_PX +
+				(SHIP_HEIGHT_PX / 2) *
+					(Math.sin(0.5 * Math.PI) + Math.cos(0.5 * Math.PI))
+		);
+		ctx.closePath();
+		ctx.stroke();
+		ctx.restore();
+	};
+	aShip();
+	// aShip.translate(10, 10);
+
+	let gameTitleText = onScreenText('steroids');
+
+	let gameStartText = onScreenText('Click to start');
 
 	ctx.fillStyle = `rgb(255,255,255) `;
 	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
 
-	ctx.fillText(gameStartText.text, canvas.width / 2.75, canvas.height * 0.1);
+	ctx.fillText(gameStartText.text, canvas.width * 0.4, canvas.height * 0.5);
+
+	ctx.font = `bold ${TEXT_SIZE * 2}px Courier New`;
+
+	ctx.fillText(gameTitleText.text, canvas.width * 0.4, canvas.height * 0.2);
 }
 
 function playerPointsText() {
@@ -257,7 +303,8 @@ function updateShipDeathState() {
 function handleGameOver() {
 	playerShip.isAlive = false;
 
-	document.addEventListener('click', handleGameStart);
+	// Restart the game without base values being altered from calling updateCanvas multiple times.
+	document.addEventListener('click', handleGameRestart);
 }
 
 function applyShipFriction() {
@@ -382,7 +429,6 @@ function handleAsteroidSplit(index) {
 	let asteroidY = currentAsteroidsArray[index].position.y;
 	let oldRadius = currentAsteroidsArray[index].radius;
 	let asteroidSize = currentAsteroidsArray[index].size;
-	console.log('assize', asteroidSize);
 
 	// Asteroid possible to split
 	if (oldRadius > 0) {
@@ -469,6 +515,7 @@ function updateCanvas() {
 				playerShip.position.y,
 				playerShip.position.angle
 			);
+			// Initial ship state: keeping comment for now.
 			// ctx.strokeStyle = 'white';
 			// ctx.lineWidth = SHIP_HEIGHT_PX / 20;
 			// ctx.beginPath();
@@ -981,11 +1028,14 @@ function setObjectsOnResize() {
 }
 
 function resizeCanvas() {
+	newGame();
+	// TODO: This canvas update modifies game speed values every change.
+	updateCanvas();
+
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 
 	setObjectsOnResize();
-	updateCanvas();
 }
 
 // ==Event Listeners==
@@ -993,14 +1043,18 @@ window.addEventListener('resize', debounce(resizeCanvas), false);
 
 document.addEventListener('keydown', keyDownAction);
 document.addEventListener('keyup', keyUpAction);
-document.addEventListener('click', handleGameStart);
+document.addEventListener('click', handleFirstGameStart);
 
-// Game start, restart
-function handleGameStart(event) {
-	// TODO: game speed increases on subsequent restarts (call of update canvas), set base values to compare when starting new game
+// Game start (first time: calls update)
+function handleFirstGameStart(event) {
 	newGame();
 	updateCanvas();
-	document.removeEventListener('click', handleGameStart);
+	document.removeEventListener('click', handleFirstGameStart);
+}
+// Subsequent restarts
+function handleGameRestart() {
+	newGame();
+	document.removeEventListener('click', handleGameRestart);
 }
 
 // Moving, rotating ship
@@ -1012,14 +1066,14 @@ function keyDownAction(event) {
 	switch (event.keyCode) {
 		// Space: shoot
 		case 32:
-			isShooting = true;
+			playerShip.isShooting = true;
 			playerShot();
 
 			break;
 		// Rotate left
 		case 37:
-			playerShip.position.rotation =
-				((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
+			shipRotationRight(playerShip);
+
 			break;
 		// Thrust
 		case 38:
@@ -1028,16 +1082,21 @@ function keyDownAction(event) {
 			break;
 		// Rotate right
 		case 39:
-			playerShip.position.rotation =
-				((-SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
+			shipRotationLeft(playerShip);
 
 			break;
 		// Brake
 		case 40:
-			isShooting = true;
+			playerShip.isShooting = true;
 			playerShot();
 			break;
 	}
+}
+function shipRotationRight(ship) {
+	ship.position.rotation = ((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
+}
+function shipRotationLeft(ship) {
+	ship.position.rotation = ((-SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
 }
 
 function keyUpAction(event) {
@@ -1047,7 +1106,7 @@ function keyUpAction(event) {
 	// Stop actions
 	switch (event.keyCode) {
 		case 32:
-			isShooting = false;
+			playerShip.isShooting = false;
 			playerShip.shootingAllowed = true;
 
 			break;
@@ -1069,7 +1128,7 @@ function keyUpAction(event) {
 
 			break;
 		case 40:
-			isShooting = false;
+			playerShip.isShooting = false;
 			playerShip.shootingAllowed = true;
 			break;
 	}
