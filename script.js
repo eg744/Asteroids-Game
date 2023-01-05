@@ -79,7 +79,7 @@ function onScreenText(text, alpha) {
 	};
 }
 function startText() {
-	// Give flourish (Ship drawn = A in Asteroids. I know it's not perfect)
+	// Give flourish (Ship drawn = A in Asteroids. I don't know if I want this, the positioning isn't right. Keep in mind.)
 	const aShip = () => {
 		ctx.save();
 		ctx.translate(canvas.width * 0.372, canvas.height * 0.152);
@@ -119,20 +119,38 @@ function startText() {
 		ctx.stroke();
 		ctx.restore();
 	};
-	aShip();
+	// aShip();
 
-	let gameTitleText = onScreenText('steroids');
+	let gameTitleText = onScreenText('Asteroids');
 
 	let gameStartText = onScreenText('Click to start');
+	let gameMoveControlsText = onScreenText('Control with arrow keys or WAD');
+	let gameShootControlsText = onScreenText(
+		'Shoot with Space, arrow down or S'
+	);
 
 	ctx.fillStyle = `rgb(255,255,255) `;
-	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-
-	ctx.fillText(gameStartText.text, canvas.width * 0.4, canvas.height * 0.5);
 
 	ctx.font = `bold ${TEXT_SIZE * 2}px Courier New`;
 
 	ctx.fillText(gameTitleText.text, canvas.width * 0.4, canvas.height * 0.2);
+
+	ctx.font = `bold ${TEXT_SIZE * 1.1}px Courier New`;
+
+	ctx.fillText(gameStartText.text, canvas.width * 0.4, canvas.height * 0.5);
+
+	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+
+	ctx.fillText(
+		gameMoveControlsText.text,
+		canvas.width * 0.1,
+		canvas.height * 0.8
+	);
+	ctx.fillText(
+		gameShootControlsText.text,
+		canvas.width * 0.1,
+		canvas.height * 0.9
+	);
 }
 
 function playerPointsText() {
@@ -981,6 +999,7 @@ function updateCanvas() {
 		gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / (FRAMERATE * 2);
 	} else if (!playerShip.isAlive) {
 		let gameStateText = onScreenText('Game Over!');
+		let gameRetryText = onScreenText('Click to try again.');
 
 		ctx.fillStyle = `rgb(255,255,255) `;
 		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
@@ -990,6 +1009,8 @@ function updateCanvas() {
 			canvas.width / 2.75,
 			canvas.height * 0.1
 		);
+
+		ctx.fillText(gameRetryText.text, canvas.width / 3, canvas.height * 0.2);
 	}
 	playerPointsText();
 	playerHighScoreText();
@@ -1062,6 +1083,7 @@ function handleGameRestart() {
 
 // Moving, rotating ship
 function keyDownAction(event) {
+	console.log(event.keyCode);
 	if (!playerShip.isAlive) {
 		return;
 	}
@@ -1075,17 +1097,30 @@ function keyDownAction(event) {
 			break;
 		// Rotate left
 		case 37:
-			shipRotationRight(playerShip);
+			shipRotationLeft(playerShip);
 
 			break;
+		case 65:
+			shipRotationLeft(playerShip);
+
+			break;
+
 		// Thrust
 		case 38:
 			playerShip.shipThrusting = true;
 
 			break;
+		case 87:
+			playerShip.shipThrusting = true;
+
+			break;
 		// Rotate right
 		case 39:
-			shipRotationLeft(playerShip);
+			shipRotationRight(playerShip);
+
+			break;
+		case 68:
+			shipRotationRight(playerShip);
 
 			break;
 
@@ -1093,12 +1128,16 @@ function keyDownAction(event) {
 			playerShip.isShooting = true;
 			playerShot();
 			break;
+		case 83:
+			playerShip.isShooting = true;
+			playerShot();
+			break;
 	}
 }
-function shipRotationRight(ship) {
+function shipRotationLeft(ship) {
 	ship.position.rotation = ((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
 }
-function shipRotationLeft(ship) {
+function shipRotationRight(ship) {
 	ship.position.rotation = ((-SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
 }
 
@@ -1110,6 +1149,7 @@ function keyUpAction(event) {
 			playerShip.shootingAllowed = true;
 
 			break;
+
 		case 37:
 			playerShip.position.rotation = 0;
 			break;
@@ -1123,11 +1163,33 @@ function keyUpAction(event) {
 				FRAMERATE;
 
 			break;
+		case 87:
+			playerShip.shipThrusting = false;
+			playerShip.thrust.x +=
+				(SHIP_THRUST_SPEED_PX * Math.cos(playerShip.position.angle)) /
+				FRAMERATE;
+			playerShip.thrust.y +=
+				(SHIP_THRUST_SPEED_PX * Math.sin(playerShip.position.angle)) /
+				FRAMERATE;
+
+			break;
 		case 39:
 			playerShip.position.rotation = 0;
 
 			break;
+		case 65:
+			playerShip.position.rotation = 0;
+
+			break;
+		case 68:
+			playerShip.position.rotation = 0;
+
+			break;
 		case 40:
+			playerShip.isShooting = false;
+			playerShip.shootingAllowed = true;
+			break;
+		case 83:
 			playerShip.isShooting = false;
 			playerShip.shootingAllowed = true;
 			break;
