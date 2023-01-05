@@ -14,7 +14,7 @@ const FRICTION = 0.7;
 // Default player ship values
 const SHIP_HEIGHT_PX = 30;
 // Deg/sec
-const SHIP_TURN_SPEED = 180;
+const SHIP_TURN_SPEED = 100;
 // Acceleration per second
 const SHIP_THRUST_SPEED_PX = 1;
 const SHIP_MAX_THRUST_SPEED = 7;
@@ -87,7 +87,7 @@ function startText() {
 		ctx.translate(canvas.width * 0.372, canvas.height * 0.152);
 
 		ctx.strokeStyle = 'white';
-		ctx.lineWidth = SHIP_HEIGHT_PX / 20;
+		ctx.lineWidth = SHIP_HEIGHT_PX / 8;
 		ctx.beginPath();
 
 		// Head
@@ -152,12 +152,12 @@ function playerPointsText() {
 }
 
 function playerHighScoreText() {
-	highScoreText = onScreenText(`High Score: ${playerHighScore} points`);
+	highScoreText = onScreenText(`High Score: ${playerHighScore}`);
 
 	ctx.fillStyle = `rgb(255,255,255) `;
 	ctx.font = `bold ${TEXT_SIZE * 0.5}px Courier New`;
 
-	ctx.fillText(highScoreText.text, canvas.width * 0.75, canvas.height * 0.9);
+	ctx.fillText(highScoreText.text, canvas.width * 0.8, canvas.height * 0.9);
 }
 
 // Call newgame(onclick)
@@ -289,6 +289,7 @@ function playerShot() {
 				FRAMERATE,
 			rotation: playerShip.position.angle / 360,
 			contactTime: 0,
+			madeContact: false,
 		});
 	}
 	playerShip.shootingAllowed = false;
@@ -565,6 +566,7 @@ function updateCanvas() {
 		playerShip.currentShots.forEach((shot) => {
 			// Shot not in contact with object
 			if (shot.contactTime == 0) {
+				// if (shot.madeContact == false) {
 				// ctx.fillStyle = 'red';
 				ctx.strokeStyle = 'red';
 				ctx.beginPath();
@@ -580,6 +582,7 @@ function updateCanvas() {
 				ctx.closePath();
 				ctx.stroke();
 			} else {
+				console.log('contact', shot.madeContact);
 				// Shot contact graphic
 				ctx.fillStyle = 'red';
 				ctx.beginPath();
@@ -824,7 +827,8 @@ function updateCanvas() {
 	}
 
 	// Player shot movement
-	for (let i = 0; i < playerShip.currentShots.length; i++) {
+	// for (let i = 0; i < playerShip.currentShots.length; i++) {
+	for (let i = playerShip.currentShots.length - 1; i >= 0; i--) {
 		// Remove shots as they exit play area
 		if (
 			playerShip.currentShots[i].x < 0 ||
@@ -852,7 +856,12 @@ function updateCanvas() {
 			if (shot.contactTime > 0) {
 				//Making contact
 				shot.contactTime--;
-				playerShip.currentShots.splice(shot, 1);
+				shot.madeContact = true;
+				console.log('made contact');
+				// Remove shot that makes contact
+				if (shot.contactTime == 0) {
+					playerShip.currentShots.splice(shot, 1);
+				}
 			} else {
 				// Move shot
 				shot.x += shot.xVelocity * FRAMERATE;
@@ -873,8 +882,7 @@ function updateCanvas() {
 					currentAsteroidsArray[i].position.y,
 					playerShip.currentShots[j].x,
 					playerShip.currentShots[j].y
-				) < currentAsteroidsArray[i].radius &&
-				playerShip.isAlive
+				) < currentAsteroidsArray[i].radius
 			) {
 				// Remove shot: free space for shots on screen
 
@@ -1100,9 +1108,6 @@ function shipRotationLeft(ship) {
 }
 
 function keyUpAction(event) {
-	if (!playerShip.isAlive) {
-		return;
-	}
 	// Stop actions
 	switch (event.keyCode) {
 		case 32:
@@ -1131,5 +1136,8 @@ function keyUpAction(event) {
 			playerShip.isShooting = false;
 			playerShip.shootingAllowed = true;
 			break;
+
+		case !playerShip.isAlive:
+			return;
 	}
 }
