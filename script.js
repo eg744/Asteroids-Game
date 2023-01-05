@@ -1,5 +1,3 @@
-// import { startText, playerPointsText } from './scoring.js';
-
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -21,7 +19,7 @@ const SHIP_MAX_THRUST_SPEED = 7;
 const SHIP_DEATH_TIME = 0.3;
 const SHIP_INVULNERABLE_TIME = 3;
 const SHIP_BLINK_TIME = 0.3;
-const SHIP_LIVES_DEFAULT = 1;
+const SHIP_LIVES_DEFAULT = 3;
 
 // Player ship shot values
 const PLAYER_SHOTS_MAX = 10;
@@ -122,7 +120,6 @@ function startText() {
 		ctx.restore();
 	};
 	aShip();
-	// aShip.translate(10, 10);
 
 	let gameTitleText = onScreenText('steroids');
 
@@ -844,7 +841,6 @@ function updateCanvas() {
 
 		// Handle shot contact for animation
 		playerShip.currentShots.forEach((shot) => {
-			console.log('shot contact', shot.contactTime);
 			// Remove shots as they exit play area
 			if (shot.x < 0 || shot.x > canvas.width) {
 				playerShip.currentShots.splice(shot, 1);
@@ -899,7 +895,6 @@ function updateCanvas() {
 	// ==Draw asteroids==
 	ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
 	currentAsteroidsArray.forEach((asteroid) => {
-		// ctx.strokeStyle = 'slategrey';
 		ctx.strokeStyle = '#807a6f';
 
 		ctx.beginPath();
@@ -1093,7 +1088,7 @@ function keyDownAction(event) {
 			shipRotationLeft(playerShip);
 
 			break;
-		// Brake
+
 		case 40:
 			playerShip.isShooting = true;
 			playerShot();
