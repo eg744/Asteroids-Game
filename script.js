@@ -336,7 +336,7 @@ function applyShipFriction() {
 
 function calculatePlayerScore(asteroidSize) {
 	if (
-		currentPoints > Number.MIN_SAFE_INTEGER &&
+		currentPoints > Number.MIN_SAFE_INTEGER ||
 		currentPoints < Number.MAX_SAFE_INTEGER
 	) {
 		switch (asteroidSize) {
@@ -885,6 +885,22 @@ function updateCanvas() {
 				shot.x += shot.xVelocity * FRAMERATE;
 				shot.y += shot.yVelocity * FRAMERATE;
 			}
+
+			// Handle shot contact for animation
+			if (shot.contactTime > 0) {
+				//Making contact
+				shot.contactTime--;
+				shot.madeContact = true;
+				console.log('made contact');
+				// Remove shot that makes contact
+				if (shot.contactTime == 0) {
+					playerShip.currentShots.splice(shot, 1);
+				}
+			} else {
+				// Move shot
+				shot.x += shot.xVelocity * FRAMERATE;
+				shot.y += shot.yVelocity * FRAMERATE;
+			}
 		});
 	}
 
@@ -1022,6 +1038,7 @@ function updateCanvas() {
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
 }
+
 // Call function when using requestanimationframe
 // updateCanvas();
 
