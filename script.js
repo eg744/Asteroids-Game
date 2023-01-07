@@ -330,7 +330,7 @@ function applyShipFriction() {
 
 function calculatePlayerScore(asteroidSize) {
 	if (
-		currentPoints > Number.MIN_SAFE_INTEGER ||
+		currentPoints > Number.MIN_SAFE_INTEGER &&
 		currentPoints < Number.MAX_SAFE_INTEGER
 	) {
 		switch (asteroidSize) {
@@ -871,7 +871,6 @@ function updateCanvas() {
 				//Making contact
 				shot.contactTime--;
 				shot.madeContact = true;
-				console.log('made contact');
 				// Remove shot that makes contact
 				if (shot.contactTime == 0) {
 					playerShip.currentShots.splice(shot, 1);
