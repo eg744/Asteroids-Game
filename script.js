@@ -331,6 +331,15 @@ function applyShipFriction() {
 }
 
 function calculatePlayerScore(asteroidSize) {
+<<<<<<< HEAD
+	if (
+		currentPoints > Number.MIN_SAFE_INTEGER &&
+		currentPoints < Number.MAX_SAFE_INTEGER
+	) {
+		switch (asteroidSize) {
+			case 'large':
+				currentPoints += ASTEROID_POINTS_LARGE;
+=======
    if (
       currentPoints > Number.MIN_SAFE_INTEGER ||
       currentPoints < Number.MAX_SAFE_INTEGER
@@ -338,6 +347,7 @@ function calculatePlayerScore(asteroidSize) {
       switch (asteroidSize) {
          case 'large':
             currentPoints += ASTEROID_POINTS_LARGE;
+>>>>>>> b850c43ac847b09bb236482e9ec67e005b081f15
 
             break;
          case 'medium':
@@ -839,6 +849,24 @@ function updateCanvas() {
             playerShip.currentShots.splice(shot, 1);
          }
 
+<<<<<<< HEAD
+			// Handle shot contact for animation
+			if (shot.contactTime > 0) {
+				//Making contact
+				shot.contactTime--;
+				shot.madeContact = true;
+				// Remove shot that makes contact
+				if (shot.contactTime == 0) {
+					playerShip.currentShots.splice(shot, 1);
+				}
+			} else {
+				// Move shot
+				shot.x += shot.xVelocity * FRAMERATE;
+				shot.y += shot.yVelocity * FRAMERATE;
+			}
+		});
+	}
+=======
          // Handle shot contact for animation
          if (shot.contactTime > 0) {
             //Making contact
@@ -856,6 +884,7 @@ function updateCanvas() {
          }
       });
    }
+>>>>>>> b850c43ac847b09bb236482e9ec67e005b081f15
 
    // Collision between player shots and asteroids
    // Loop by first inserted asteroids, player shots
