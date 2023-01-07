@@ -209,7 +209,6 @@ function newGame() {
 }
 function newLevel() {
 	gameLevelText = onScreenText(`Level ${level + 1}`, 1.0);
-	console.log('newlvel');
 	createAsteroidsArray();
 }
 startText();
@@ -520,7 +519,6 @@ function handleAsteroidSplit(index) {
 
 // ==Update each frame==
 function updateCanvas() {
-	console.log('canvas');
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
 
@@ -873,7 +871,6 @@ function updateCanvas() {
 			} else if (shot.y < 0 || shot.y > canvas.height) {
 				playerShip.currentShots.splice(shot, 1);
 			}
-
 			// Handle shot contact for animation
 			if (shot.contactTime > 0) {
 				//Making contact
