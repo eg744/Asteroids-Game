@@ -45,7 +45,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // Computer player values
-const COMPUTER_ACTIVE = true;
+const COMPUTER_ACTIVE = false;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -209,6 +209,7 @@ function newGame() {
 }
 function newLevel() {
 	gameLevelText = onScreenText(`Level ${level + 1}`, 1.0);
+	console.log('newlvel');
 	createAsteroidsArray();
 }
 startText();
@@ -519,6 +520,7 @@ function handleAsteroidSplit(index) {
 
 // ==Update each frame==
 function updateCanvas() {
+	console.log('canvas');
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
 
@@ -886,151 +888,159 @@ function updateCanvas() {
 				shot.x += shot.xVelocity * FRAMERATE;
 				shot.y += shot.yVelocity * FRAMERATE;
 			}
+
+			// Handle shot contact for animation
+			if (shot.contactTime > 0) {
+				//Making contact
+				shot.contactTime--;
+				shot.madeContact = true;
+				console.log('made contact');
+				// Remove shot that makes contact
+				if (shot.contactTime == 0) {
+					playerShip.currentShots.splice(shot, 1);
+				}
+			} else {
+				// Move shot
+				shot.x += shot.xVelocity * FRAMERATE;
+				shot.y += shot.yVelocity * FRAMERATE;
+			}
 		});
 	}
 
-	// Handle shot contact for animation
-	if (shot.contactTime > 0) {
-		//Making contact
-		shot.contactTime--;
-		shot.madeContact = true;
-		console.log('made contact');
-		// Remove shot that makes contact
-		if (shot.contactTime == 0) {
-			playerShip.currentShots.splice(shot, 1);
-		}
-	} else {
-		// Move shot
-		shot.x += shot.xVelocity * FRAMERATE;
-		shot.y += shot.yVelocity * FRAMERATE;
-	}
-}
+	// Collision between player shots and asteroids
+	// Loop by first inserted asteroids, player shots
+	for (let i = currentAsteroidsArray.length - 1; i >= 0; i--) {
+		for (let j = playerShip.currentShots.length - 1; j >= 0; j--) {
+			if (
+				// Shot, laser not finished colliding
+				playerShip.currentShots[j].contactTime == 0 &&
+				asteroidDistanceCalculated(
+					currentAsteroidsArray[i].position.x,
+					currentAsteroidsArray[i].position.y,
+					playerShip.currentShots[j].x,
+					playerShip.currentShots[j].y
+				) < currentAsteroidsArray[i].radius
+			) {
+				// Remove shot: free space for shots on screen
 
-// Collision between player shots and asteroids
-// Loop by first inserted asteroids, player shots
-for (let i = currentAsteroidsArray.length - 1; i >= 0; i--) {
-	for (let j = playerShip.currentShots.length - 1; j >= 0; j--) {
-		if (
-			// Shot, laser not finished colliding
-			playerShip.currentShots[j].contactTime == 0 &&
-			asteroidDistanceCalculated(
-				currentAsteroidsArray[i].position.x,
-				currentAsteroidsArray[i].position.y,
-				playerShip.currentShots[j].x,
-				playerShip.currentShots[j].y
-			) < currentAsteroidsArray[i].radius
-		) {
-			// Remove shot: free space for shots on screen
-
-			// Break/destroy asteroid and show collision with laser
-			handleAsteroidSplit(i);
-			playerShip.currentShots[j].contactTime = Math.ceil(
-				PLAYER_SHOT_CONTACT_TIME * FRAMERATE
-			);
-			break;
+				// Break/destroy asteroid and show collision with laser
+				handleAsteroidSplit(i);
+				playerShip.currentShots[j].contactTime = Math.ceil(
+					PLAYER_SHOT_CONTACT_TIME * FRAMERATE
+				);
+				break;
+			}
 		}
 	}
-}
 
-// ==Draw asteroids==
-ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
-currentAsteroidsArray.forEach((asteroid) => {
-	ctx.strokeStyle = '#807a6f';
+	// ==Draw asteroids==
+	ctx.lineWidth = ASTEROIDS_HEIGHT_PX / 20;
+	currentAsteroidsArray.forEach((asteroid) => {
+		ctx.strokeStyle = '#807a6f';
 
-	ctx.beginPath();
+		ctx.beginPath();
 
-	// Center of asteroid
-	ctx.moveTo(
-		asteroid.position.x +
-			asteroid.radius *
-				asteroid.offset[0] *
-				Math.cos(asteroid.position.angle),
-		asteroid.position.y +
-			asteroid.radius *
-				asteroid.offset[0] *
-				Math.sin(asteroid.position.angle)
-	);
-	// Draw Polygon: number of vertices
-	for (let i = 1; i < asteroid.vertices; i++) {
-		// Line to each corner of polygon
-		ctx.lineTo(
+		// Center of asteroid
+		ctx.moveTo(
 			asteroid.position.x +
 				asteroid.radius *
-					asteroid.offset[i] *
-					Math.cos(
-						asteroid.position.angle +
-							// Modified for degrees in each angle
-							(i * Math.PI * 2) / asteroid.vertices
-					),
+					asteroid.offset[0] *
+					Math.cos(asteroid.position.angle),
 			asteroid.position.y +
 				asteroid.radius *
-					asteroid.offset[i] *
-					Math.sin(
-						asteroid.position.angle +
-							(i * Math.PI * 2) / asteroid.vertices
-					)
+					asteroid.offset[0] *
+					Math.sin(asteroid.position.angle)
 		);
-	}
-	ctx.closePath();
-	ctx.stroke();
-
-	// Asteroid movement
-
-	asteroid.position.x += asteroid.position.xVelocity;
-	asteroid.position.y += asteroid.position.yVelocity;
-
-	// Edge detection, loop on other side
-	if (asteroid.position.x < 0 - asteroid.radius) {
-		asteroid.position.x = canvas.width + asteroid.radius;
-	} else if (asteroid.position.x > canvas.width + asteroid.radius) {
-		asteroid.position.x = 0 - asteroid.radius;
-	}
-
-	if (asteroid.position.y < 0 - asteroid.radius) {
-		asteroid.position.y = canvas.height + asteroid.radius;
-	} else if (asteroid.position.y > canvas.height + asteroid.radius) {
-		asteroid.position.y = 0 - asteroid.radius;
-	}
-
-	if (SHOW_COLLISION) {
-		ctx.strokeStyle = 'green';
-		ctx.beginPath();
-		ctx.arc(
-			asteroid.position.x,
-			asteroid.position.y,
-			asteroid.radius,
-			0,
-			Math.PI * 2,
-			false
-		);
+		// Draw Polygon: number of vertices
+		for (let i = 1; i < asteroid.vertices; i++) {
+			// Line to each corner of polygon
+			ctx.lineTo(
+				asteroid.position.x +
+					asteroid.radius *
+						asteroid.offset[i] *
+						Math.cos(
+							asteroid.position.angle +
+								// Modified for degrees in each angle
+								(i * Math.PI * 2) / asteroid.vertices
+						),
+				asteroid.position.y +
+					asteroid.radius *
+						asteroid.offset[i] *
+						Math.sin(
+							asteroid.position.angle +
+								(i * Math.PI * 2) / asteroid.vertices
+						)
+			);
+		}
+		ctx.closePath();
 		ctx.stroke();
+
+		// Asteroid movement
+
+		asteroid.position.x += asteroid.position.xVelocity;
+		asteroid.position.y += asteroid.position.yVelocity;
+
+		// Edge detection, loop on other side
+		if (asteroid.position.x < 0 - asteroid.radius) {
+			asteroid.position.x = canvas.width + asteroid.radius;
+		} else if (asteroid.position.x > canvas.width + asteroid.radius) {
+			asteroid.position.x = 0 - asteroid.radius;
+		}
+
+		if (asteroid.position.y < 0 - asteroid.radius) {
+			asteroid.position.y = canvas.height + asteroid.radius;
+		} else if (asteroid.position.y > canvas.height + asteroid.radius) {
+			asteroid.position.y = 0 - asteroid.radius;
+		}
+
+		if (SHOW_COLLISION) {
+			ctx.strokeStyle = 'green';
+			ctx.beginPath();
+			ctx.arc(
+				asteroid.position.x,
+				asteroid.position.y,
+				asteroid.radius,
+				0,
+				Math.PI * 2,
+				false
+			);
+			ctx.stroke();
+		}
+	});
+
+	// Draw on screen level text
+	if (gameLevelText.textAlpha >= 0 && playerShip.isAlive) {
+		ctx.fillStyle = `rgba(255,255,255,${gameLevelText.textAlpha}) `;
+		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+
+		ctx.fillText(
+			gameLevelText.text,
+			canvas.width / 2.75,
+			canvas.height * 0.1
+		);
+		// Fadeout text
+		gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / (FRAMERATE * 2);
+	} else if (!playerShip.isAlive) {
+		let gameStateText = onScreenText('Game Over!');
+		let gameRetryText = onScreenText('Click to try again.');
+
+		ctx.fillStyle = `rgb(255,255,255) `;
+		ctx.font = `bold ${TEXT_SIZE}px Courier New`;
+
+		ctx.fillText(
+			gameStateText.text,
+			canvas.width / 2.75,
+			canvas.height * 0.1
+		);
+
+		ctx.fillText(gameRetryText.text, canvas.width / 3, canvas.height * 0.2);
 	}
-});
+	playerPointsText();
+	playerHighScoreText();
 
-// Draw on screen level text
-if (gameLevelText.textAlpha >= 0 && playerShip.isAlive) {
-	ctx.fillStyle = `rgba(255,255,255,${gameLevelText.textAlpha}) `;
-	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-
-	ctx.fillText(gameLevelText.text, canvas.width / 2.75, canvas.height * 0.1);
-	// Fadeout text
-	gameLevelText.textAlpha -= 1.0 / TEXT_FADE_TIME / (FRAMERATE * 2);
-} else if (!playerShip.isAlive) {
-	let gameStateText = onScreenText('Game Over!');
-	let gameRetryText = onScreenText('Click to try again.');
-
-	ctx.fillStyle = `rgb(255,255,255) `;
-	ctx.font = `bold ${TEXT_SIZE}px Courier New`;
-
-	ctx.fillText(gameStateText.text, canvas.width / 2.75, canvas.height * 0.1);
-
-	ctx.fillText(gameRetryText.text, canvas.width / 3, canvas.height * 0.2);
+	// Animate recursively
+	requestAnimationFrame(updateCanvas);
 }
-playerPointsText();
-playerHighScoreText();
-
-// Animate recursively
-requestAnimationFrame(updateCanvas);
 
 // Call function when using requestanimationframe
 // updateCanvas();
