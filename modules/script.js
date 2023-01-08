@@ -1,3 +1,6 @@
+import { MyMatrix } from './ai-player.js';
+
+// Note: when using modules that access globals, attach vars to window
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -45,7 +48,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // Computer player values
-const COMPUTER_ACTIVE = false;
+const COMPUTER_ACTIVE = true;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -76,8 +79,11 @@ let level,
 
 function activateComputerPlayer() {
 	if (COMPUTER_ACTIVE) {
+		let matrix0 = new MyMatrix(2, 3);
+		console.table(matrix0);
 	}
 }
+activateComputerPlayer();
 function onScreenText(text, alpha) {
 	return {
 		text: text,
