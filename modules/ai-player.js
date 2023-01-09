@@ -1,5 +1,33 @@
 'use strict';
 
+export class MyAI {
+	constructor(numInputs, numHidden, numOutputs) {
+		this._numInputs = numInputs;
+		this._numHidden = numHidden;
+		this._numOutputs = numOutputs;
+
+		this._weight0 = new MyMatrix(this._numInputs, this._numHidden);
+		this._weight1 = new MyMatrix(this._numHidden, this._numOutputs);
+
+		this.weight0.randomizeWeight();
+		this.weight1.randomizeWeight();
+	}
+
+	get weight0() {
+		return this._weight0;
+	}
+	set weight0(weight) {
+		this._weight0 = weight;
+	}
+
+	get weight1() {
+		return this._weight1;
+	}
+	set weight1(weight) {
+		this._weight1 = weight;
+	}
+}
+
 // ==Matrices==
 export class MyMatrix {
 	constructor(rows, columns, data = []) {
