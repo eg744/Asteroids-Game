@@ -80,7 +80,8 @@ let level,
 function activateComputerPlayer() {
 	if (COMPUTER_ACTIVE) {
 		let matrix0 = new MyMatrix(2, 3);
-		console.table(matrix0);
+		matrix0.randomizeWeight();
+		console.table(matrix0.data);
 	}
 }
 activateComputerPlayer();

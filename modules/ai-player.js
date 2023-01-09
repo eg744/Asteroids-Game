@@ -37,4 +37,37 @@ export class MyMatrix {
 	get data() {
 		return this._data;
 	}
+
+	// Addition
+	static addTwoMatrices(matrix0, matrix1) {
+		MyMatrix.compareDimensions(matrix0, matrix1);
+		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		for (let i = 0; i < matrix.rows; i++) {
+			for (let j = 0; j < matrix.columns; j++) {
+				// Added values stored
+				matrix.data[i][j] = matrix0.data[i][j] + matrix1.data[i][j];
+			}
+		}
+		return matrix;
+	}
+
+	// Check 2 matrices have same dimensions
+	static compareTwoMatrixDimensions(matrix0, matrix1) {
+		if (
+			matrix0.rows !== matrix1.rows ||
+			matrix0.columns !== matrix1.columns
+		) {
+			throw new Error('Matrices must have same dimensions');
+		}
+	}
+
+	// Weight
+	randomizeWeight() {
+		for (let i = 0; i < this.rows; i++) {
+			for (let j = 0; j < this.columns; j++) {
+				// Value between -1, 1
+				this.data[i][j] = Math.random() * 2 - 1;
+			}
+		}
+	}
 }
