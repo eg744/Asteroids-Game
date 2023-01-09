@@ -114,6 +114,18 @@ export class MyMatrix {
 		return matrix;
 	}
 
+	// Function called on each cell
+	static mapMatrix(matrix0, matrixFunction) {
+		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		for (let i = 0; i < matrix.rows; i++) {
+			for (let j = 0; j < matrix.columns; j++) {
+				// After function applied, result in matrix copy
+				matrix.data[i][j] = matrixFunction(matrix0.data[i][j]);
+			}
+		}
+		return matrix;
+	}
+
 	// Weight
 	randomizeWeight() {
 		for (let i = 0; i < this.rows; i++) {
