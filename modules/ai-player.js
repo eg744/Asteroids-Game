@@ -51,6 +51,45 @@ export class MyMatrix {
 		return matrix;
 	}
 
+	// Subtraction
+	static subtractTwoMatrices(matrix0, matrix1) {
+		MyMatrix.compareDimensions(matrix0, matrix1);
+		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		for (let i = 0; i < matrix.rows; i++) {
+			for (let j = 0; j < matrix.columns; j++) {
+				// Added values stored
+				matrix.data[i][j] = matrix0.data[i][j] - matrix1.data[i][j];
+			}
+		}
+		return matrix;
+	}
+
+	// Multiplication
+	static multiplyTwoMatrices(matrix0, matrix1) {
+		MyMatrix.compareDimensions(matrix0, matrix1);
+		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		for (let i = 0; i < matrix.rows; i++) {
+			for (let j = 0; j < matrix.columns; j++) {
+				// Added values stored
+				matrix.data[i][j] = matrix0.data[i][j] * matrix1.data[i][j];
+			}
+		}
+		return matrix;
+	}
+
+	// Dot product
+	static dotTwoMatrices(matrix0, matrix1) {
+		MyMatrix.compareDimensions(matrix0, matrix1);
+		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		for (let i = 0; i < matrix.rows; i++) {
+			for (let j = 0; j < matrix.columns; j++) {
+				// Added values stored
+				matrix.data[i][j] = matrix0.data[i][j] - matrix1.data[i][j];
+			}
+		}
+		return matrix;
+	}
+
 	// Check 2 matrices have same dimensions
 	static compareTwoMatrixDimensions(matrix0, matrix1) {
 		if (
