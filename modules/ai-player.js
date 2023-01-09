@@ -93,6 +93,16 @@ export class MyMatrix {
 		return new MyMatrix(1, array.length, [array]);
 	}
 
+	// Transpose (swap rows, columns) single matrix
+	static transposeMatrix(matrix0) {
+		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		for (let i = 0; i < matrix.rows; i++) {
+			for (let j = 0; j < matrix.columns; j++) {
+				matrix.data[j][i] = matrix0.data[i][j];
+			}
+		}
+	}
+
 	// Dot product
 	static dotProductTwoMatrices(matrix0, matrix1) {
 		// Dot compatibility: matrix0:columns == matrix1:rows
