@@ -38,6 +38,16 @@ export class MyMatrix {
 		return this._data;
 	}
 
+	// Check 2 matrices have same dimensions
+	static compareTwoMatrixDimensions(matrix0, matrix1) {
+		if (
+			matrix0.rows !== matrix1.rows ||
+			matrix0.columns !== matrix1.columns
+		) {
+			throw new Error('Matrices must have same dimensions');
+		}
+	}
+
 	// Addition
 	static addTwoMatrices(matrix0, matrix1) {
 		MyMatrix.compareDimensions(matrix0, matrix1);
@@ -57,7 +67,7 @@ export class MyMatrix {
 		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
-				// Added values stored
+				// Subtracted values stored
 				matrix.data[i][j] = matrix0.data[i][j] - matrix1.data[i][j];
 			}
 		}
@@ -70,34 +80,38 @@ export class MyMatrix {
 		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
-				// Added values stored
+				// Multiplied values stored
 				matrix.data[i][j] = matrix0.data[i][j] * matrix1.data[i][j];
 			}
 		}
 		return matrix;
 	}
 
+	// Array => matrix: 1 row
+	static convertFromArray(array) {
+		// Single row. Pass data 2D array
+		return new MyMatrix(1, array.length, [array]);
+	}
+
 	// Dot product
-	static dotTwoMatrices(matrix0, matrix1) {
+	static dotProductTwoMatrices(matrix0, matrix1) {
+		// Dot compatibility: matrix0:columns == matrix1:rows
+		if (matrix0.columns !== matrix1.rows) {
+			throw new Error('Matricies not dot compatible');
+		}
 		MyMatrix.compareDimensions(matrix0, matrix1);
-		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+		let matrix = new MyMatrix(matrix0.rows, matrix1.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
-				// Added values stored
-				matrix.data[i][j] = matrix0.data[i][j] - matrix1.data[i][j];
+				// First cell of 0:row * cell 1:column
+				let sum = 0;
+				for (let k = 0; k < matrix0.columns; k++) {
+					sum += matrix0.data[i][k] * matrix1.data[k][j];
+				}
+				matrix.data[i][j] = sum;
 			}
 		}
 		return matrix;
-	}
-
-	// Check 2 matrices have same dimensions
-	static compareTwoMatrixDimensions(matrix0, matrix1) {
-		if (
-			matrix0.rows !== matrix1.rows ||
-			matrix0.columns !== matrix1.columns
-		) {
-			throw new Error('Matrices must have same dimensions');
-		}
 	}
 
 	// Weight
