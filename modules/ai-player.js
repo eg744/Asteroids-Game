@@ -62,11 +62,26 @@ export class MyNeuralNetwork {
 
 		let outputErrors = MyMatrix.subtractTwoMatrices(targets, outputs);
 		console.table('outputerrors', outputErrors.data);
+
+		// Deltas (output errors * derivitive of output)
+		let outputDerivitives = MyMatrix.mapMatrix(outputs, (x) =>
+			sigmoid(x, true)
+		);
+
+		let outputDeltas = MyMatrix.multiplyTwoMatrices(
+			outputErrors,
+			outputDerivitives
+		);
 	}
 }
 
 // Activation "Sigmoid" function return val from 0 to 1
-function sigmoid(x) {
+function sigmoid(x, derivitive = false) {
+	// True derivitive = sig(x) * (1 - sig(x))
+	if (derivitive) {
+		// When x = sigmoid(x)
+		return x * (1 - x);
+	}
 	return 1 / (1 + Math.exp(-x));
 }
 
