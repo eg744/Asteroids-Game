@@ -1,4 +1,4 @@
-import { MyMatrix, MyAI } from './ai-player.js';
+import { MyMatrix, MyNeuralNetwork } from './ai-player.js';
 
 // Note: when using modules that access globals, attach vars to window
 const canvas = document.getElementById('canvas');
@@ -84,7 +84,7 @@ let level,
 function activateComputerPlayer() {
 	let aiPlayer;
 	if (COMPUTER_ACTIVE) {
-		aiPlayer = new MyAI(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
 		console.table(aiPlayer.weight0.data);
 		console.table(aiPlayer.weight1.data);

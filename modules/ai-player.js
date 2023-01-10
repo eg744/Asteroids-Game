@@ -1,6 +1,8 @@
 'use strict';
 
-export class MyAI {
+// https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
+
+export class MyNeuralNetwork {
 	constructor(numInputs, numHidden, numOutputs) {
 		this._numInputs = numInputs;
 		this._numHidden = numHidden;
@@ -31,9 +33,15 @@ export class MyAI {
 		// inputArray to matrix
 		let inputs = MyMatrix.convertFromArray(inputArray);
 
-		// find hidden values, run activation
+		// find hidden values, run activation on each data value (random weights)
 		let hiddenValues = MyMatrix.dotProductTwoMatrices(inputs, this.weight0);
+		hiddenValues = MyMatrix.mapMatrix(hidden, (x) => sigmoid(x));
 	}
+}
+
+// Activation "Sigmoid" function return val from 0 to 1
+function sigmoid(x) {
+	return 1 / (1 + Math.exp(-x));
 }
 
 // ==Matrices==
@@ -123,7 +131,7 @@ export class MyMatrix {
 
 	// Array => matrix: 1 row
 	static convertFromArray(array) {
-		// Single row. Pass data 2D array
+		// Single row. Pass data in 2D array
 		return new MyMatrix(1, array.length, [array]);
 	}
 
