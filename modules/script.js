@@ -86,8 +86,12 @@ function activateComputerPlayer() {
 	if (COMPUTER_ACTIVE) {
 		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
-		console.table(aiPlayer.weight0.data);
-		console.table(aiPlayer.weight1.data);
+		aiPlayer.feedForward([0, 1]);
+
+		aiPlayer.training([0, 1], [1]);
+
+		// console.table(aiPlayer.weight0.data);
+		// console.table(aiPlayer.weight1.data);
 
 		// let matrix0 = new MyMatrix(2, 3, [2, 1, -1], [4, 3, 0]);
 		// matrix0.randomizeWeight();

@@ -32,10 +32,36 @@ export class MyNeuralNetwork {
 	feedForward(inputArray) {
 		// inputArray to matrix
 		let inputs = MyMatrix.convertFromArray(inputArray);
+		// console.table('inputs', inputs.data);
 
 		// find hidden values, run activation on each data value (random weights)
 		let hiddenValues = MyMatrix.dotProductTwoMatrices(inputs, this.weight0);
-		hiddenValues = MyMatrix.mapMatrix(hidden, (x) => sigmoid(x));
+		hiddenValues = MyMatrix.mapMatrix(hiddenValues, (x) => sigmoid(x));
+		// console.table('hidden', hiddenValues.data);
+
+		let outputs = MyMatrix.dotProductTwoMatrices(
+			hiddenValues,
+			this.weight1
+		);
+
+		outputs = MyMatrix.mapMatrix(outputs, (x) => sigmoid(x));
+		// console.table('outputs', outputs.data);
+		return outputs;
+
+		// Bias
+	}
+
+	// Insert training data
+	training(inputArray, targetArray) {
+		// data in
+		let outputs = this.feedForward(inputArray);
+		console.table('output', outputs.data);
+
+		let targets = MyMatrix.convertFromArray(targetArray);
+		console.table('targets', targets.data);
+
+		let outputErrors = MyMatrix.subtractTwoMatrices(targets, outputs);
+		console.table('outputerrors', outputErrors.data);
 	}
 }
 
@@ -92,7 +118,7 @@ export class MyMatrix {
 
 	// Addition
 	static addTwoMatrices(matrix0, matrix1) {
-		MyMatrix.compareDimensions(matrix0, matrix1);
+		MyMatrix.compareTwoMatrixDimensions(matrix0, matrix1);
 		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
@@ -105,8 +131,10 @@ export class MyMatrix {
 
 	// Subtraction
 	static subtractTwoMatrices(matrix0, matrix1) {
-		MyMatrix.compareDimensions(matrix0, matrix1);
+		MyMatrix.compareTwoMatrixDimensions(matrix0, matrix1);
+
 		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
+
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
 				// Subtracted values stored
@@ -118,7 +146,7 @@ export class MyMatrix {
 
 	// Multiplication
 	static multiplyTwoMatrices(matrix0, matrix1) {
-		MyMatrix.compareDimensions(matrix0, matrix1);
+		MyMatrix.compareTwoMatrixDimensions(matrix0, matrix1);
 		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
@@ -151,7 +179,6 @@ export class MyMatrix {
 		if (matrix0.columns !== matrix1.rows) {
 			throw new Error('Matricies not dot compatible');
 		}
-		MyMatrix.compareDimensions(matrix0, matrix1);
 		let matrix = new MyMatrix(matrix0.rows, matrix1.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
