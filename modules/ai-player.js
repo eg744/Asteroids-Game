@@ -26,6 +26,14 @@ export class MyAI {
 	set weight1(weight) {
 		this._weight1 = weight;
 	}
+
+	feedForward(inputArray) {
+		// inputArray to matrix
+		let inputs = MyMatrix.convertFromArray(inputArray);
+
+		// find hidden values, run activation
+		let hiddenValues = MyMatrix.dotProductTwoMatrices(inputs, this.weight0);
+	}
 }
 
 // ==Matrices==
@@ -45,12 +53,10 @@ export class MyMatrix {
 					this._data[i][j] = 0;
 				}
 			}
-		} else {
-			if (data.length != rows || data[0].length != columns) {
-				throw new Error(
-					'Incorrect row, column or data values. Must contain same number of rows and columns, data to fill the matrix.'
-				);
-			}
+		} else if (data.length != rows || data[0].length != columns) {
+			throw new Error(
+				'Incorrect row, column or data values. Must contain same number of rows and columns, data to fill the matrix.'
+			);
 		}
 	}
 
