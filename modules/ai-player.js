@@ -7,6 +7,7 @@ export class MyNeuralNetwork {
 		this._numInputs = numInputs;
 		this._numHidden = numHidden;
 		this._numOutputs = numOutputs;
+		this._hiddenValues = [];
 
 		this._weight0 = new MyMatrix(this._numInputs, this._numHidden);
 		this._weight1 = new MyMatrix(this._numHidden, this._numOutputs);
@@ -29,18 +30,30 @@ export class MyNeuralNetwork {
 		this._weight1 = weight;
 	}
 
+	get hiddenValues() {
+		return this._hiddenValues;
+	}
+	set hiddenValues(hiddenValues) {
+		this._hiddenValues = hiddenValues;
+	}
+
 	feedForward(inputArray) {
 		// inputArray to matrix
-		let inputs = MyMatrix.convertFromArray(inputArray);
+		this.inputs = MyMatrix.convertFromArray(inputArray);
 		// console.table('inputs', inputs.data);
 
 		// find hidden values, run activation on each data value (random weights)
-		let hiddenValues = MyMatrix.dotProductTwoMatrices(inputs, this.weight0);
-		hiddenValues = MyMatrix.mapMatrix(hiddenValues, (x) => sigmoid(x));
+		this.hiddenValues = MyMatrix.dotProductTwoMatrices(
+			this.inputs,
+			this.weight0
+		);
+		this.hiddenValues = MyMatrix.mapMatrix(this.hiddenValues, (x) =>
+			sigmoid(x)
+		);
 		// console.table('hidden', hiddenValues.data);
 
 		let outputs = MyMatrix.dotProductTwoMatrices(
-			hiddenValues,
+			this.hiddenValues,
 			this.weight1
 		);
 
@@ -72,6 +85,32 @@ export class MyNeuralNetwork {
 			outputErrors,
 			outputDerivitives
 		);
+		console.table('outputdeltas', outputDeltas);
+
+		// Hidden layer errors (delta dot transpose of weights1)
+		let weight1Transpose = MyMatrix.transposeMatrix(this.weight1);
+		console.log('weight1', this.weight1);
+		console.table('outdelta', outputDeltas.data);
+		console.table('wttranspose', weight1Transpose.data);
+
+		// todo: output.columns and weighttransposed.rows not dot compatible. Check transposematrix, args accepted cols, rows.
+		let hiddenErrors = MyMatrix.dotProductTwoMatrices(
+			outputDeltas,
+			weight1Transpose
+		);
+
+		console.table('hiddenerror', hiddenErrors.data);
+
+		// Delta of hidden
+		let hiddenDerivites = MyMatrix.mapMatrix(this.hiddenValues, (x) =>
+			sigmoid(x, true)
+		);
+
+		let hiddenDeltas = MyMatrix.multiplyTwoMatrices(
+			hiddenErrors,
+			hiddenDerivites
+		);
+		console.table('hidddelta', hiddenDeltas);
 	}
 }
 
@@ -180,19 +219,25 @@ export class MyMatrix {
 
 	// Transpose (swap rows, columns) single matrix
 	static transposeMatrix(matrix0) {
-		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
-		for (let i = 0; i < matrix.rows; i++) {
-			for (let j = 0; j < matrix.columns; j++) {
+		// I don't know why cols arg 0, rows, arg 1
+		let matrix = new MyMatrix(matrix0.columns, matrix0.rows);
+		//let matrix = new MyMatrix(matrix0.row, matrix0.columns);
+
+		for (let i = 0; i < matrix0.rows; i++) {
+			for (let j = 0; j < matrix0.columns; j++) {
 				matrix.data[j][i] = matrix0.data[i][j];
 			}
 		}
+		return matrix;
 	}
 
 	// Dot product
 	static dotProductTwoMatrices(matrix0, matrix1) {
 		// Dot compatibility: matrix0:columns == matrix1:rows
 		if (matrix0.columns !== matrix1.rows) {
-			throw new Error('Matricies not dot compatible');
+			throw new Error(
+				'Matricies not dot compatible. 0.columns Must equal 1.rows'
+			);
 		}
 		let matrix = new MyMatrix(matrix0.rows, matrix1.columns);
 		for (let i = 0; i < matrix.rows; i++) {
