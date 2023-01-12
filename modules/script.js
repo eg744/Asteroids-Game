@@ -1,3 +1,6 @@
+import { MyMatrix, MyNeuralNetwork } from './ai-player.js';
+
+// Note: when using modules that access globals, attach vars to window
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -44,15 +47,19 @@ const ASTEROID_POINTS_SMALL = 10;
 // Development values
 const SHOW_COLLISION = false;
 
-// Computer player values
+// ==Computer player values==
 const COMPUTER_ACTIVE = false;
+const NUM_INPUTS = 2;
+const NUM_HIDDEN = 5;
+// 1 bool (turn left or right)
+const NUM_OUTPUTS = 1;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
 const TEXT_SIZE = 30;
 
 // Localstorage save key
-const LOCAL_HIGH_SCORE = 'highScore';
+const LOCAL_ASTEROIDS_HIGH_SCORE = 'highScore';
 
 // Background stars
 const NUM_STARS = 100;
@@ -75,9 +82,23 @@ let level,
 	textAlpha;
 
 function activateComputerPlayer() {
+	let aiPlayer;
 	if (COMPUTER_ACTIVE) {
+		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+
+		aiPlayer.feedForward([0, 1]);
+
+		aiPlayer.training([0, 1], [1]);
+
+		// console.table(aiPlayer.weight0.data);
+		// console.table(aiPlayer.weight1.data);
+
+		// let matrix0 = new MyMatrix(2, 3, [2, 1, -1], [4, 3, 0]);
+		// matrix0.randomizeWeight();
+		// console.table(matrix0.data);
 	}
 }
+activateComputerPlayer();
 function onScreenText(text, alpha) {
 	return {
 		text: text,
@@ -196,7 +217,7 @@ function newGame() {
 
 	level = 0;
 	currentPoints = 0;
-	let initialHighScore = localStorage.getItem(LOCAL_HIGH_SCORE);
+	let initialHighScore = localStorage.getItem(LOCAL_ASTEROIDS_HIGH_SCORE);
 	if (initialHighScore == null) {
 		playerHighScore = 0;
 	} else {
@@ -359,7 +380,7 @@ function calculatePlayerScore(asteroidSize) {
 		if (currentPoints > playerHighScore) {
 			playerHighScore = currentPoints;
 			// Save user's high score with localstorage
-			localStorage.setItem(LOCAL_HIGH_SCORE, playerHighScore);
+			localStorage.setItem(LOCAL_ASTEROIDS_HIGH_SCORE, playerHighScore);
 		}
 	}
 }
