@@ -13,8 +13,15 @@ export class MyNeuralNetwork {
 		this._weight0 = new MyMatrix(this._numInputs, this._numHidden);
 		this._weight1 = new MyMatrix(this._numHidden, this._numOutputs);
 
+		this._bias0 = new MyMatrix(1, this._numHidden);
+		this._bias1 = new MyMatrix(1, this._numOutputs);
+
+		// Randomize weights, biases
 		this.weight0.randomizeWeight();
 		this.weight1.randomizeWeight();
+
+		this.bias0.randomizeWeight();
+		this.bias1.randomizeWeight();
 	}
 
 	get weight0() {
@@ -29,6 +36,20 @@ export class MyNeuralNetwork {
 	}
 	set weight1(weight) {
 		this._weight1 = weight;
+	}
+
+	get bias0() {
+		return this._weight0;
+	}
+	set bias0(bias) {
+		this._bias0 = bias;
+	}
+
+	get bias1() {
+		return this._bias1;
+	}
+	set bias1(bias) {
+		this._bias1 = bias;
 	}
 
 	get hiddenValues() {
@@ -69,7 +90,8 @@ export class MyNeuralNetwork {
 		// console.table('outputs', outputs.data);
 		return outputs;
 
-		// Bias
+		// Bias: output own weights (1 on input, 1 on hidden)
+		// All inputs in XOR test could be 0. (0 * any weight = 0)
 	}
 
 	// Insert training data

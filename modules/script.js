@@ -53,7 +53,7 @@ const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
-const NUM_TRAINING_SAMPLES = 1000;
+const NUM_TRAINING_SAMPLES = 10000;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -92,9 +92,20 @@ function activateComputerPlayer() {
 		for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
 			let input0 = Math.round(Math.random());
 			let input1 = Math.round(Math.random());
+			let output;
+			if (input0 == input1) {
+				output = 0;
+			} else {
+				output = 1;
+			}
 
-			aiPlayer.training([input0, input1], [1]);
+			aiPlayer.training([input0, input1], [output]);
 		}
+		console.log(`0 0 = ${aiPlayer.feedForward([0, 0]).data}`);
+		console.log(`0 1 = ${aiPlayer.feedForward([0, 1]).data} `);
+		console.log(` 1 0 = ${aiPlayer.feedForward([1, 0]).data} `);
+
+		console.log(`1 1 = ${aiPlayer.feedForward([1, 1]).data} `);
 
 		// console.table(aiPlayer.weight0.data);
 		// console.table(aiPlayer.weight1.data);
@@ -104,7 +115,7 @@ function activateComputerPlayer() {
 		// console.table(matrix0.data);
 	}
 }
-// activateComputerPlayer();
+activateComputerPlayer();
 
 function onScreenText(text, alpha) {
 	return {
