@@ -39,7 +39,7 @@ export class MyNeuralNetwork {
 	}
 
 	get bias0() {
-		return this._weight0;
+		return this._bias0;
 	}
 	set bias0(bias) {
 		this._bias0 = bias;
@@ -76,6 +76,14 @@ export class MyNeuralNetwork {
 			this.inputs,
 			this.weight0
 		);
+
+		// Bias: output own weights (1 on input, 1 on hidden)
+		this.hiddenValues = MyMatrix.addTwoMatrices(
+			this.hiddenValues,
+			this.bias0
+		);
+		// Bias helpful in case: All inputs in XOR test could be 0. (0 * any weight = 0)
+
 		this.hiddenValues = MyMatrix.mapMatrix(this.hiddenValues, (x) =>
 			sigmoid(x)
 		);
@@ -85,13 +93,11 @@ export class MyNeuralNetwork {
 			this.hiddenValues,
 			this.weight1
 		);
+		outputs = MyMatrix.addTwoMatrices(outputs, this.bias1);
 
 		outputs = MyMatrix.mapMatrix(outputs, (x) => sigmoid(x));
 		// console.table('outputs', outputs.data);
 		return outputs;
-
-		// Bias: output own weights (1 on input, 1 on hidden)
-		// All inputs in XOR test could be 0. (0 * any weight = 0)
 	}
 
 	// Insert training data
@@ -147,6 +153,11 @@ export class MyNeuralNetwork {
 			this.weight0,
 			MyMatrix.dotProductTwoMatrices(inputsTranspose, hiddenDeltas)
 		);
+
+		// Biases
+		// console.log(hiddenDeltas);
+		this.bias1 = MyMatrix.addTwoMatrices(this.bias1, outputDeltas);
+		this.bias0 = MyMatrix.addTwoMatrices(this.bias0, hiddenDeltas);
 	}
 }
 
@@ -208,7 +219,7 @@ export class MyMatrix {
 
 	// Addition
 	static addTwoMatrices(matrix0, matrix1) {
-		MyMatrix.compareTwoMatrixDimensions(matrix0, matrix1);
+		// MyMatrix.compareTwoMatrixDimensions(matrix0, matrix1);
 		let matrix = new MyMatrix(matrix0.rows, matrix0.columns);
 		for (let i = 0; i < matrix.rows; i++) {
 			for (let j = 0; j < matrix.columns; j++) {
