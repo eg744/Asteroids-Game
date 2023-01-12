@@ -76,13 +76,10 @@ export class MyNeuralNetwork {
 	training(inputArray, targetArray) {
 		// data in
 		let outputs = this.feedForward(inputArray);
-		console.table('output', outputs.data);
 
 		let targets = MyMatrix.convertFromArray(targetArray);
-		console.table('targets', targets.data);
 
 		let outputErrors = MyMatrix.subtractTwoMatrices(targets, outputs);
-		console.table('outputerrors', outputErrors.data);
 
 		// Deltas (output errors * derivitive of output)
 		let outputDerivitives = MyMatrix.mapMatrix(outputs, (x) =>
@@ -93,20 +90,16 @@ export class MyNeuralNetwork {
 			outputErrors,
 			outputDerivitives
 		);
-		console.table('outputdeltas', outputDeltas);
 
 		// Hidden layer errors (delta dot transpose of weights1)
 		let weight1Transpose = MyMatrix.transposeMatrix(this.weight1);
 		// console.table('outdelta', outputDeltas.data);
-		// console.table('wttranspose', weight1Transpose.data);
 
 		// todo: output.columns and weighttransposed.rows not dot compatible. Check transposematrix, args accepted cols, rows.
 		let hiddenErrors = MyMatrix.dotProductTwoMatrices(
 			outputDeltas,
 			weight1Transpose
 		);
-
-		// console.table('hiddenerror', hiddenErrors.data);
 
 		// Delta of hidden
 		let hiddenDerivites = MyMatrix.mapMatrix(this.hiddenValues, (x) =>
@@ -117,15 +110,20 @@ export class MyNeuralNetwork {
 			hiddenErrors,
 			hiddenDerivites
 		);
-		console.table('hiddendeltas', hiddenDeltas.data);
 
 		// Weights: Add transpose of layers (dot deltas)
 		let hiddenTranspose = MyMatrix.transposeMatrix(this.hiddenValues);
 
-		let inputsTranspose = MyMatrix.transposeMatrix(inputs);
 		this.weight1 = MyMatrix.addTwoMatrices(
 			this.weight1,
 			MyMatrix.dotProductTwoMatrices(hiddenTranspose, outputDeltas)
+		);
+
+		let inputsTranspose = MyMatrix.transposeMatrix(this.inputs);
+
+		this.weight0 = MyMatrix.addTwoMatrices(
+			this.weight0,
+			MyMatrix.dotProductTwoMatrices(inputsTranspose, hiddenDeltas)
 		);
 	}
 }
