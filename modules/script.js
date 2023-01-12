@@ -48,7 +48,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = true;
+const COMPUTER_ACTIVE = false;
 const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
 // 1 bool (turn left or right)
