@@ -48,11 +48,12 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = false;
+const COMPUTER_ACTIVE = true;
 const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
-// 1 bool (turn left or right)
+// 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
+const NUM_TRAINING_SAMPLES = 1000;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -86,9 +87,14 @@ function activateComputerPlayer() {
 	if (COMPUTER_ACTIVE) {
 		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
-		aiPlayer.feedForward([0, 1]);
+		// Training neural network with XOR logic
+		// 0 0 = 0, 0 1 = 1, 1 0 = 1, 1 1 = 0
+		for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
+			let input0 = Math.round(Math.random());
+			let input1 = Math.round(Math.random());
 
-		aiPlayer.training([0, 1], [1]);
+			aiPlayer.training([input0, input1], [1]);
+		}
 
 		// console.table(aiPlayer.weight0.data);
 		// console.table(aiPlayer.weight1.data);
@@ -98,7 +104,8 @@ function activateComputerPlayer() {
 		// console.table(matrix0.data);
 	}
 }
-activateComputerPlayer();
+// activateComputerPlayer();
+
 function onScreenText(text, alpha) {
 	return {
 		text: text,

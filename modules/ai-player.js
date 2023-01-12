@@ -95,7 +95,7 @@ export class MyNeuralNetwork {
 		let weight1Transpose = MyMatrix.transposeMatrix(this.weight1);
 		// console.table('outdelta', outputDeltas.data);
 
-		// todo: output.columns and weighttransposed.rows not dot compatible. Check transposematrix, args accepted cols, rows.
+		// todo: output.columns and weighttransposed.rows not dot compatible. Check transposematrix, args accepted in order: columns, rows.
 		let hiddenErrors = MyMatrix.dotProductTwoMatrices(
 			outputDeltas,
 			weight1Transpose
