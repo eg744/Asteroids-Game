@@ -5,7 +5,7 @@
 
 // Error logs on neural network
 const ERROR_LOGGING = true;
-// Error log time (in iterations)
+//  (in iterations)
 const ERROR_LOG_FREQUENCY = 10000;
 
 export class MyNeuralNetwork {
