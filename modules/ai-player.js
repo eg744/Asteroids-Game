@@ -1,6 +1,12 @@
 'use strict';
 
+// https://www.freecodecamp.org/news/how-to-create-a-neural-network-in-javascript-in-only-30-lines-of-code-343dafc50d49/
 // https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
+
+// Error logs on neural network
+const ERROR_LOGGING = true;
+//  (in iterations)
+const ERROR_LOG_FREQUENCY = 10000;
 
 export class MyNeuralNetwork {
 	constructor(numInputs, numHidden, numOutputs) {
@@ -22,7 +28,18 @@ export class MyNeuralNetwork {
 
 		this.bias0.randomizeWeight();
 		this.bias1.randomizeWeight();
+
+		// Error logs
+		this._logCount = ERROR_LOG_FREQUENCY;
 	}
+
+	get logCount() {
+		return this._logCount;
+	}
+	set logCount(logCount) {
+		this._logCount = logCount;
+	}
+	// Count
 
 	get weight0() {
 		return this._weight0;
@@ -108,6 +125,19 @@ export class MyNeuralNetwork {
 		let targets = MyMatrix.convertFromArray(targetArray);
 
 		let outputErrors = MyMatrix.subtractTwoMatrices(targets, outputs);
+
+		// Training error log
+		if (ERROR_LOGGING) {
+			if (this.logCount == ERROR_LOG_FREQUENCY) {
+				console.log('output errors:');
+
+				console.log(outputErrors.data[0][0]);
+			}
+			this.logCount--;
+			if (this.logCount == 0) {
+				this.logCount = ERROR_LOG_FREQUENCY;
+			}
+		}
 
 		// Deltas (output errors * derivitive of output)
 		let outputDerivitives = MyMatrix.mapMatrix(outputs, (x) =>

@@ -31,7 +31,7 @@ const PLAYER_SHOT_SPEED_PX = 5;
 const PLAYER_SHOT_CONTACT_TIME = 0.02;
 
 // Default asteroid values
-const ASTEROIDS_NUMBER = 5;
+const ASTEROIDS_NUMBER = 1;
 const ASTEROIDS_SIZE_PX = 100;
 const ASTEROIDS_HEIGHT_PX = 30;
 const ASTEROID_SHAPE_VARIATION = 0.5;
@@ -48,7 +48,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = false;
+const COMPUTER_ACTIVE = true;
 const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
 // 1 bool output (turn left or right)
@@ -87,35 +87,37 @@ function activateComputerPlayer() {
 	if (COMPUTER_ACTIVE) {
 		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
-		// Training neural network with XOR logic
-		// 0 0 = 0, 0 1 = 1, 1 0 = 1, 1 1 = 0
-		for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
-			let input0 = Math.round(Math.random());
-			let input1 = Math.round(Math.random());
-			let output;
-			if (input0 == input1) {
-				output = 0;
-			} else {
-				output = 1;
-			}
-
-			aiPlayer.training([input0, input1], [output]);
-		}
-		console.log(`0 0 = ${aiPlayer.feedForward([0, 0]).data}`);
-		console.log(`0 1 = ${aiPlayer.feedForward([0, 1]).data} `);
-		console.log(` 1 0 = ${aiPlayer.feedForward([1, 0]).data} `);
-
-		console.log(`1 1 = ${aiPlayer.feedForward([1, 1]).data} `);
-
 		// console.table(aiPlayer.weight0.data);
 		// console.table(aiPlayer.weight1.data);
-
 		// let matrix0 = new MyMatrix(2, 3, [2, 1, -1], [4, 3, 0]);
 		// matrix0.randomizeWeight();
 		// console.table(matrix0.data);
 	}
 }
 activateComputerPlayer();
+
+function neuralNetworkXORTest() {
+	aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+
+	// Training neural network with XOR logic
+	// 0 0 = 0, 0 1 = 1, 1 0 = 1, 1 1 = 0
+	for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
+		let input0 = Math.round(Math.random());
+		let input1 = Math.round(Math.random());
+		let output;
+		if (input0 == input1) {
+			output = 0;
+		} else {
+			output = 1;
+		}
+
+		aiPlayer.training([input0, input1], [output]);
+	}
+	console.log(`0 0 = ${aiPlayer.feedForward([0, 0]).data}`);
+	console.log(`0 1 = ${aiPlayer.feedForward([0, 1]).data}`);
+	console.log(`1 0 = ${aiPlayer.feedForward([1, 0]).data}`);
+	console.log(`1 1 = ${aiPlayer.feedForward([1, 1]).data}`);
+}
 
 function onScreenText(text, alpha) {
 	return {
