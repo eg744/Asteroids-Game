@@ -48,12 +48,12 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = false;
+const COMPUTER_ACTIVE = true;
 const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
-const NUM_TRAINING_SAMPLES = 10000;
+const NUM_TRAINING_SAMPLES = 100000;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
