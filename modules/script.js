@@ -54,6 +54,9 @@ const NUM_HIDDEN = 5;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
 const NUM_TRAINING_SAMPLES = 10000;
+// Neural outputs for ship turns
+const OUTPUT_VAL_LEFT = 0;
+const OUTPUT_VAL_RIGHT = 1;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -82,6 +85,8 @@ let level,
 	currentPoints,
 	textAlpha;
 
+// ==Computer player functions==
+
 function activateComputerPlayer() {
 	let aiPlayer;
 	if (COMPUTER_ACTIVE) {
@@ -97,7 +102,7 @@ function activateComputerPlayer() {
 				Math.random() * (canvas.height + ASTEROIDS_SIZE_PX) -
 				ASTEROIDS_SIZE_PX / 2;
 
-			// Ship position, angle
+			// Ship position, angle (radians)
 			shipX = playerShip.position.x;
 			shipY = playerShip.position.y;
 			shipAngle = Math.random() * Math.PI * 2;
@@ -110,6 +115,12 @@ function activateComputerPlayer() {
 				asteroidX,
 				asteroidY
 			);
+
+			let turningDirection =
+				angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
+
+			// Train to decide turning direction
+			aiPlayer.training([asteroidX, asteroidY, shipAngle]);
 		}
 
 		// console.table(aiPlayer.weight0.data);
@@ -126,7 +137,7 @@ newGame();
 
 // Calculate angle between given coordinates (current and target coordinates)
 function findAngleToPoint(x, y, bearing, targetX, targetY) {
-	// Inverse tan: (use atan2 where 4 quadrants in coordinate space)
+	// Inverse tan: (use atan2 when 4 quadrants in coordinate space). Negate Y for desired game movement
 	let angleToTarget = Math.atan2(-targetY + y, targetX - x);
 	let difference = bearing - angleToTarget;
 	// Add 360deg to maintain same angle position with positive number. Modulus 360deg will return result between 0, 360deg in radians
@@ -155,6 +166,8 @@ function neuralNetworkXORTest() {
 	console.log(`1 0 = ${aiPlayer.feedForward([1, 0]).data}`);
 	console.log(`1 1 = ${aiPlayer.feedForward([1, 1]).data}`);
 }
+
+// ==On screen text functions==
 
 function onScreenText(text, alpha) {
 	return {
