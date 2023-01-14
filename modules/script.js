@@ -48,7 +48,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = true;
+const COMPUTER_ACTIVE = false;
 const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
 // 1 bool output (turn left or right)
@@ -86,6 +86,31 @@ function activateComputerPlayer() {
 	let aiPlayer;
 	if (COMPUTER_ACTIVE) {
 		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+		let asteroidX, asteroidY, shipAngle, shipX, shipY;
+		for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
+			// Random positions of asteroids
+			// Check off-screen asteroids up to its radius. (subtract radius)
+			asteroidX =
+				Math.random() * (canvas.width + ASTEROIDS_SIZE_PX) -
+				ASTEROIDS_SIZE_PX / 2;
+			asteroidY =
+				Math.random() * (canvas.height + ASTEROIDS_SIZE_PX) -
+				ASTEROIDS_SIZE_PX / 2;
+
+			// Ship position, angle
+			shipX = playerShip.position.x;
+			shipY = playerShip.position.y;
+			shipAngle = Math.random() * Math.PI * 2;
+
+			// Angle to asteroid
+			let angleToAsteroid = findAngleToPoint(
+				shipX,
+				shipY,
+				shipAngle,
+				asteroidX,
+				asteroidY
+			);
+		}
 
 		// console.table(aiPlayer.weight0.data);
 		// console.table(aiPlayer.weight1.data);
@@ -94,7 +119,19 @@ function activateComputerPlayer() {
 		// console.table(matrix0.data);
 	}
 }
-activateComputerPlayer();
+// Calling newgame here to get ship obj positional data
+newGame();
+
+// activateComputerPlayer();
+
+// Calculate angle between given coordinates (current and target coordinates)
+function findAngleToPoint(x, y, bearing, targetX, targetY) {
+	// Inverse tan: (use atan2 where 4 quadrants in coordinate space)
+	let angleToTarget = Math.atan2(-targetY + y, targetX - x);
+	let difference = bearing - angleToTarget;
+	// Add 360deg to maintain same angle position with positive number. Modulus 360deg will return result between 0, 360deg in radians
+	return (difference + Math.PI * 2) % (Math.PI * 2);
+}
 
 function neuralNetworkXORTest() {
 	aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
@@ -255,27 +292,6 @@ function newLevel() {
 startText();
 
 function createNewPlayerShip(xPosition, yPosition, radius, lives) {
-	// playerShip = {
-	// 	radius: SHIP_HEIGHT_PX / 2,
-	// 	isAlive: true,
-	// 	lives: 33,
-	// 	deathTimer: 0,
-	// 	isShooting: false,
-
-	// 	position: {
-	// 		x: canvas.width / 2,
-	// 		y: canvas.height / 2,
-
-	// 		angle: (90 / 180) * Math.PI,
-	// 		rotation: 0,
-	// 	},
-
-	// 	shipThrusting: false,
-	// 	thrust: {
-	// 		x: 0,
-	// 		y: 0,
-	// 	},
-	// };
 	return {
 		radius: radius,
 		isAlive: true,
