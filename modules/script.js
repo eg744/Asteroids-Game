@@ -85,7 +85,9 @@ let level,
 	currentPoints,
 	textAlpha;
 
+// =============================
 // ==Computer player functions==
+//==============================
 
 function activateComputerPlayer() {
 	let aiPlayer;
@@ -119,8 +121,13 @@ function activateComputerPlayer() {
 			let turningDirection =
 				angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
 
-			// Train to decide turning direction
-			aiPlayer.training([asteroidX, asteroidY, shipAngle]);
+			// Train to decide turning direction (after normalized values: 0 or 1)
+			aiPlayer.training(
+				[asteroidX, asteroidY, shipAngle],
+				[turningDirection]
+			);
+
+			// Output of turn will be 1 or 0 in relation to current position
 		}
 
 		// console.table(aiPlayer.weight0.data);
@@ -167,7 +174,24 @@ function neuralNetworkXORTest() {
 	console.log(`1 1 = ${aiPlayer.feedForward([1, 1]).data}`);
 }
 
+function normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle) {
+	// Values will be 0 or 1
+	let inputs = [];
+	// Asteroid possibly off screen up to radius
+	inputs[0] =
+		(asteroidX + ASTEROIDS_SIZE_PX / 2) /
+		(canvas.width + ASTEROIDS_SIZE_PX);
+
+	inputs[1] =
+		(asteroidY + ASTEROIDS_SIZE_PX / 2) /
+		(canvas.height + ASTEROIDS_SIZE_PX);
+
+	inputs[2] = shipAngle / (Math.PI * 2);
+}
+
+// ============================
 // ==On screen text functions==
+//=============================
 
 function onScreenText(text, alpha) {
 	return {
@@ -275,6 +299,10 @@ function playerHighScoreText() {
 // Call newgame(onclick)
 // newGame();
 
+//=========================
+// ==Game setup functions==
+//=========================
+
 function newGame() {
 	// ==Player ship==
 	// Default
@@ -358,7 +386,9 @@ function drawPlayerShip(x, y, angle, playerColor = 'white') {
 	ctx.stroke();
 }
 
+//=============
 // ==Shooting==
+//=============
 function playerShot() {
 	if (
 		playerShip.shootingAllowed &&
@@ -387,7 +417,9 @@ function playerShot() {
 	console.log(playerShip.currentShots);
 	console.log(playerShip.position.angle);
 }
-
+//====================
+// ==Game over state==
+//====================
 function updateShipDeathState() {
 	playerShip.deathTimer = Math.ceil(SHIP_DEATH_TIME * FRAMERATE);
 }
@@ -433,8 +465,9 @@ function calculatePlayerScore(asteroidSize) {
 		}
 	}
 }
-
+//==============
 // ==Asteroids==
+//==============
 
 function createNewAsteroid(x, y, radius, size) {
 	let asteroidLevelModifier = 1 + 0.1 * level;
@@ -586,8 +619,9 @@ function handleAsteroidSplit(index) {
 		newLevel();
 	}
 }
-
+//======================
 // ==Update each frame==
+//======================
 function updateCanvas() {
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
@@ -1110,8 +1144,10 @@ function updateCanvas() {
 }
 
 // Call function when using requestanimationframe
-// updateCanvas();
 
+//==============================
+// ==Title screen stars effect==
+//==============================
 function populateStars() {
 	ctx.fillStyle = 'white';
 
@@ -1153,7 +1189,9 @@ function resizeCanvas() {
 	setObjectsOnResize();
 }
 
+//====================
 // ==Event Listeners==
+//====================
 window.addEventListener('resize', debounce(resizeCanvas), false);
 
 document.addEventListener('keydown', keyDownAction);
@@ -1171,6 +1209,9 @@ function handleGameRestart() {
 	newGame();
 	document.removeEventListener('click', handleGameRestart);
 }
+//============
+//==Controls==
+//============
 
 // Moving, rotating ship
 function keyDownAction(event) {
