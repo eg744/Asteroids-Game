@@ -5,7 +5,7 @@
 
 // Error logs on neural network
 const ERROR_LOGGING = true;
-//  (in iterations)
+// (in iterations)
 const ERROR_LOG_FREQUENCY = 10000;
 
 export class MyNeuralNetwork {
@@ -288,7 +288,7 @@ export class MyMatrix {
 		return matrix;
 	}
 
-	// Array => matrix: 1 row
+	// Array converted to matrix with 1 row
 	static convertFromArray(array) {
 		// Single row. Pass data in 2D array
 		return new MyMatrix(1, array.length, [array]);
@@ -313,7 +313,7 @@ export class MyMatrix {
 		// Dot compatibility: matrix0:columns == matrix1:rows
 		if (matrix0.columns !== matrix1.rows) {
 			throw new Error(
-				'Matricies not dot compatible. 0.columns Must equal 1.rows'
+				`Matricies not dot compatible. 0.columns (columns :${matrix0.columns}) Must equal 1.rows (rows: ${matrix1.rows})`
 			);
 		}
 		let matrix = new MyMatrix(matrix0.rows, matrix1.columns);

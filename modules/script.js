@@ -7,7 +7,9 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+//============
 // ==Globals==
+//============
 const FRAMERATE = 60;
 // Slow object speed: 1 = base speed
 const FRICTION = 0.7;
@@ -48,12 +50,12 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = false;
+const COMPUTER_ACTIVE = true;
 const NUM_INPUTS = 2;
 const NUM_HIDDEN = 5;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
-const NUM_TRAINING_SAMPLES = 10000;
+const NUM_TRAINING_SAMPLES = 1000;
 // Neural outputs for ship turns
 const OUTPUT_VAL_LEFT = 0;
 const OUTPUT_VAL_RIGHT = 1;
@@ -118,13 +120,17 @@ function activateComputerPlayer() {
 				asteroidY
 			);
 
-			let turningDirection =
+			let decidedTurningDirection =
 				angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
 
-			// Train to decide turning direction (after normalized values: 0 or 1)
+			// Train to decide turning direction (normalized values: 0 or 1)
 			aiPlayer.training(
-				[asteroidX, asteroidY, shipAngle],
-				[turningDirection]
+				normaliseAsteroidsNeuralInputs([
+					asteroidX,
+					asteroidY,
+					shipAngle,
+				]),
+				[decidedTurningDirection]
 			);
 
 			// Output of turn will be 1 or 0 in relation to current position
@@ -140,7 +146,7 @@ function activateComputerPlayer() {
 // Calling newgame here to get ship obj positional data
 newGame();
 
-// activateComputerPlayer();
+activateComputerPlayer();
 
 // Calculate angle between given coordinates (current and target coordinates)
 function findAngleToPoint(x, y, bearing, targetX, targetY) {
@@ -152,7 +158,7 @@ function findAngleToPoint(x, y, bearing, targetX, targetY) {
 }
 
 function neuralNetworkXORTest() {
-	aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+	let aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
 	// Training neural network with XOR logic
 	// 0 0 = 0, 0 1 = 1, 1 0 = 1, 1 1 = 0
@@ -187,6 +193,8 @@ function normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle) {
 		(canvas.height + ASTEROIDS_SIZE_PX);
 
 	inputs[2] = shipAngle / (Math.PI * 2);
+
+	return inputs;
 }
 
 // ============================
