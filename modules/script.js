@@ -51,8 +51,8 @@ const SHOW_COLLISION = false;
 
 // ==Computer player values==
 const COMPUTER_ACTIVE = true;
-const NUM_INPUTS = 2;
-const NUM_HIDDEN = 5;
+const NUM_INPUTS = 4;
+const NUM_HIDDEN = 20;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
 const NUM_TRAINING_SAMPLES = 1000;
@@ -125,11 +125,7 @@ function activateComputerPlayer() {
 
 			// Train to decide turning direction (normalized values: 0 or 1)
 			aiPlayer.training(
-				normaliseAsteroidsNeuralInputs([
-					asteroidX,
-					asteroidY,
-					shipAngle,
-				]),
+				[asteroidX, asteroidY, angleToAsteroid, shipAngle],
 				[decidedTurningDirection]
 			);
 
@@ -422,8 +418,8 @@ function playerShot() {
 		});
 	}
 	playerShip.shootingAllowed = false;
-	console.log(playerShip.currentShots);
-	console.log(playerShip.position.angle);
+	// console.log(playerShip.currentShots);
+	// console.log(playerShip.position.angle);
 }
 //====================
 // ==Game over state==
@@ -715,7 +711,7 @@ function updateCanvas() {
 				ctx.closePath();
 				ctx.stroke();
 			} else {
-				console.log('contact', shot.madeContact);
+				// console.log('contact', shot.madeContact);
 				// Shot contact graphic
 				ctx.fillStyle = 'red';
 				ctx.beginPath();

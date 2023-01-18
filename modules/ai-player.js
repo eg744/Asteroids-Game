@@ -23,11 +23,11 @@ export class MyNeuralNetwork {
 		this._bias1 = new MyMatrix(1, this._numOutputs);
 
 		// Randomize weights, biases
-		this.weight0.randomizeWeight();
-		this.weight1.randomizeWeight();
+		this._weight0.randomizeWeight();
+		this._weight1.randomizeWeight();
 
-		this.bias0.randomizeWeight();
-		this.bias1.randomizeWeight();
+		this._bias0.randomizeWeight();
+		this._bias1.randomizeWeight();
 
 		// Error logs
 		this._logCount = ERROR_LOG_FREQUENCY;
@@ -86,7 +86,6 @@ export class MyNeuralNetwork {
 	feedForward(inputArray) {
 		// inputArray to matrix
 		this.inputs = MyMatrix.convertFromArray(inputArray);
-		// console.table('inputs', inputs.data);
 
 		// find hidden values, run activation on each data value (random weights)
 		this.hiddenValues = MyMatrix.dotProductTwoMatrices(
@@ -121,6 +120,7 @@ export class MyNeuralNetwork {
 	training(inputArray, targetArray) {
 		// data in
 		let outputs = this.feedForward(inputArray);
+		// console.log('outputs', outputs);
 
 		let targets = MyMatrix.convertFromArray(targetArray);
 
