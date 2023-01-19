@@ -51,14 +51,16 @@ const SHOW_COLLISION = false;
 
 // ==Computer player values==
 const COMPUTER_ACTIVE = true;
-const NUM_INPUTS = 4;
+const NUM_INPUTS = 3;
 const NUM_HIDDEN = 20;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
-const NUM_TRAINING_SAMPLES = 1000;
+const NUM_TRAINING_SAMPLES = 10000;
 // Neural outputs for ship turns
 const OUTPUT_VAL_LEFT = 0;
 const OUTPUT_VAL_RIGHT = 1;
+// How close a predicted output must be to commit to movement
+const OUTPUT_THRESHOLD = 0.25;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -123,9 +125,27 @@ function activateComputerPlayer() {
 			let decidedTurningDirection =
 				angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
 
+			// console.log(
+			// 	normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
+			// );
+
 			// Train to decide turning direction (normalized values: 0 or 1)
+			// BUG: Getting matricies not dot compatible error when using normalised inputs.
 			aiPlayer.training(
-				[asteroidX, asteroidY, angleToAsteroid, shipAngle],
+				// [
+				// 	normaliseAsteroidsNeuralInputs(
+				// 		asteroidX,
+				// 		asteroidY,
+				// 		// angleToAsteroid,
+				// 		shipAngle
+				// 	),
+				// ],
+				[
+					asteroidX,
+					asteroidY,
+					// angleToAsteroid,
+					shipAngle,
+				],
 				[decidedTurningDirection]
 			);
 
@@ -627,6 +647,24 @@ function handleAsteroidSplit(index) {
 // ==Update each frame==
 //======================
 function updateCanvas() {
+	// Automation setup
+	if (COMPUTER_ACTIVE) {
+		let asteroidX = currentAsteroidsArray[0].x;
+		let asteroidY = currentAsteroidsArray[0].y;
+		let shipAngle = playerShip.position.angle;
+
+		let neuralPrediction = aiPlayer.feedForward(
+			normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
+		).data[0][0];
+
+		// Computer's turning decision
+		let differenceLeft = (neuralPrediction = Math.abs(
+			neuralPrediction - OUTPUT_VAL_LEFT
+		));
+		let differenceRight = (neuralPrediction = Math.abs(
+			neuralPrediction - OUTPUT_VAL_RIGHT
+		));
+	}
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
 

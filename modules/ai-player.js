@@ -129,9 +129,7 @@ export class MyNeuralNetwork {
 		// Training error log
 		if (ERROR_LOGGING) {
 			if (this.logCount == ERROR_LOG_FREQUENCY) {
-				console.log('output errors:');
-
-				console.log(outputErrors.data[0][0]);
+				console.log('output errors:', outputErrors.data[0][0]);
 			}
 			this.logCount--;
 			if (this.logCount == 0) {
@@ -185,7 +183,6 @@ export class MyNeuralNetwork {
 		);
 
 		// Biases
-		// console.log(hiddenDeltas);
 		this.bias1 = MyMatrix.addTwoMatrices(this.bias1, outputDeltas);
 		this.bias0 = MyMatrix.addTwoMatrices(this.bias0, hiddenDeltas);
 	}
