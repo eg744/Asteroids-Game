@@ -7,7 +7,9 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+//============
 // ==Globals==
+//============
 const FRAMERATE = 60;
 // Slow object speed: 1 = base speed
 const FRICTION = 0.7;
@@ -49,14 +51,16 @@ const SHOW_COLLISION = false;
 
 // ==Computer player values==
 const COMPUTER_ACTIVE = false;
-const NUM_INPUTS = 2;
-const NUM_HIDDEN = 5;
+const NUM_INPUTS = 3;
+const NUM_HIDDEN = 20;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
 const NUM_TRAINING_SAMPLES = 10000;
 // Neural outputs for ship turns
 const OUTPUT_VAL_LEFT = 0;
 const OUTPUT_VAL_RIGHT = 1;
+// How close a predicted output must be to commit to movement
+const OUTPUT_THRESHOLD = 0.25;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -118,13 +122,31 @@ function activateComputerPlayer() {
 				asteroidY
 			);
 
-			let turningDirection =
+			let decidedTurningDirection =
 				angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
 
-			// Train to decide turning direction (after normalized values: 0 or 1)
+			// console.log(
+			// 	normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
+			// );
+
+			// Train to decide turning direction (normalized values: 0 or 1)
+			// BUG: Getting matricies not dot compatible error when using normalised inputs.
 			aiPlayer.training(
-				[asteroidX, asteroidY, shipAngle],
-				[turningDirection]
+				// [
+				// 	normaliseAsteroidsNeuralInputs(
+				// 		asteroidX,
+				// 		asteroidY,
+				// 		// angleToAsteroid,
+				// 		shipAngle
+				// 	),
+				// ],
+				[
+					asteroidX,
+					asteroidY,
+					// angleToAsteroid,
+					shipAngle,
+				],
+				[decidedTurningDirection]
 			);
 
 			// Output of turn will be 1 or 0 in relation to current position
@@ -138,9 +160,9 @@ function activateComputerPlayer() {
 	}
 }
 // Calling newgame here to get ship obj positional data
-newGame();
+// newGame();
 
-// activateComputerPlayer();
+activateComputerPlayer();
 
 // Calculate angle between given coordinates (current and target coordinates)
 function findAngleToPoint(x, y, bearing, targetX, targetY) {
@@ -152,7 +174,7 @@ function findAngleToPoint(x, y, bearing, targetX, targetY) {
 }
 
 function neuralNetworkXORTest() {
-	aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+	let aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
 	// Training neural network with XOR logic
 	// 0 0 = 0, 0 1 = 1, 1 0 = 1, 1 1 = 0
@@ -187,6 +209,8 @@ function normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle) {
 		(canvas.height + ASTEROIDS_SIZE_PX);
 
 	inputs[2] = shipAngle / (Math.PI * 2);
+
+	return inputs;
 }
 
 // ============================
@@ -414,8 +438,8 @@ function playerShot() {
 		});
 	}
 	playerShip.shootingAllowed = false;
-	console.log(playerShip.currentShots);
-	console.log(playerShip.position.angle);
+	// console.log(playerShip.currentShots);
+	// console.log(playerShip.position.angle);
 }
 //====================
 // ==Game over state==
@@ -623,6 +647,25 @@ function handleAsteroidSplit(index) {
 // ==Update each frame==
 //======================
 function updateCanvas() {
+	// Automation setup
+	if (COMPUTER_ACTIVE) {
+		let asteroidX = currentAsteroidsArray[0].x;
+		let asteroidY = currentAsteroidsArray[0].y;
+		let shipAngle = playerShip.position.angle;
+
+		let neuralPrediction = aiPlayer.feedForward(
+			normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
+		).data[0][0];
+
+		// Computer's turning decision
+		let differenceLeft = (neuralPrediction = Math.abs(
+			neuralPrediction - OUTPUT_VAL_LEFT
+		));
+		let differenceRight = (neuralPrediction = Math.abs(
+			neuralPrediction - OUTPUT_VAL_RIGHT
+		));
+	}
+
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
 
@@ -707,7 +750,7 @@ function updateCanvas() {
 				ctx.closePath();
 				ctx.stroke();
 			} else {
-				console.log('contact', shot.madeContact);
+				// console.log('contact', shot.madeContact);
 				// Shot contact graphic
 				ctx.fillStyle = 'red';
 				ctx.beginPath();
@@ -995,7 +1038,6 @@ function updateCanvas() {
 				//Making contact
 				shot.contactTime--;
 				shot.madeContact = true;
-				console.log('made contact');
 				// Remove shot that makes contact
 				if (shot.contactTime == 0) {
 					playerShip.currentShots.splice(shot, 1);
@@ -1215,7 +1257,6 @@ function handleGameRestart() {
 
 // Moving, rotating ship
 function keyDownAction(event) {
-	console.log(event.keyCode);
 	if (!playerShip.isAlive || COMPUTER_ACTIVE) {
 		return;
 	}

@@ -5,7 +5,7 @@
 
 // Error logs on neural network
 const ERROR_LOGGING = true;
-//  (in iterations)
+// (in iterations)
 const ERROR_LOG_FREQUENCY = 10000;
 
 export class MyNeuralNetwork {
@@ -23,11 +23,11 @@ export class MyNeuralNetwork {
 		this._bias1 = new MyMatrix(1, this._numOutputs);
 
 		// Randomize weights, biases
-		this.weight0.randomizeWeight();
-		this.weight1.randomizeWeight();
+		this._weight0.randomizeWeight();
+		this._weight1.randomizeWeight();
 
-		this.bias0.randomizeWeight();
-		this.bias1.randomizeWeight();
+		this._bias0.randomizeWeight();
+		this._bias1.randomizeWeight();
 
 		// Error logs
 		this._logCount = ERROR_LOG_FREQUENCY;
@@ -86,7 +86,6 @@ export class MyNeuralNetwork {
 	feedForward(inputArray) {
 		// inputArray to matrix
 		this.inputs = MyMatrix.convertFromArray(inputArray);
-		// console.table('inputs', inputs.data);
 
 		// find hidden values, run activation on each data value (random weights)
 		this.hiddenValues = MyMatrix.dotProductTwoMatrices(
@@ -121,6 +120,7 @@ export class MyNeuralNetwork {
 	training(inputArray, targetArray) {
 		// data in
 		let outputs = this.feedForward(inputArray);
+		// console.log('outputs', outputs);
 
 		let targets = MyMatrix.convertFromArray(targetArray);
 
@@ -129,9 +129,7 @@ export class MyNeuralNetwork {
 		// Training error log
 		if (ERROR_LOGGING) {
 			if (this.logCount == ERROR_LOG_FREQUENCY) {
-				console.log('output errors:');
-
-				console.log(outputErrors.data[0][0]);
+				console.log('output errors:', outputErrors.data[0][0]);
 			}
 			this.logCount--;
 			if (this.logCount == 0) {
@@ -185,7 +183,6 @@ export class MyNeuralNetwork {
 		);
 
 		// Biases
-		// console.log(hiddenDeltas);
 		this.bias1 = MyMatrix.addTwoMatrices(this.bias1, outputDeltas);
 		this.bias0 = MyMatrix.addTwoMatrices(this.bias0, hiddenDeltas);
 	}
@@ -288,7 +285,7 @@ export class MyMatrix {
 		return matrix;
 	}
 
-	// Array => matrix: 1 row
+	// Array converted to matrix with 1 row
 	static convertFromArray(array) {
 		// Single row. Pass data in 2D array
 		return new MyMatrix(1, array.length, [array]);
@@ -313,7 +310,7 @@ export class MyMatrix {
 		// Dot compatibility: matrix0:columns == matrix1:rows
 		if (matrix0.columns !== matrix1.rows) {
 			throw new Error(
-				'Matricies not dot compatible. 0.columns Must equal 1.rows'
+				`Matricies not dot compatible. 0.columns (columns :${matrix0.columns}) Must equal 1.rows (rows: ${matrix1.rows})`
 			);
 		}
 		let matrix = new MyMatrix(matrix0.rows, matrix1.columns);
