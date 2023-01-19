@@ -55,7 +55,7 @@ const NUM_INPUTS = 3;
 const NUM_HIDDEN = 20;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
-const NUM_TRAINING_SAMPLES = 10000;
+const NUM_TRAINING_SAMPLES = 500000;
 // Neural outputs for ship turns
 const OUTPUT_VAL_LEFT = 0;
 const OUTPUT_VAL_RIGHT = 1;
@@ -93,10 +93,17 @@ let level,
 // ==Computer player functions==
 //==============================
 
-function activateComputerPlayer() {
-	let aiPlayer;
+function createAIPlayer() {
+	let aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+	return aiPlayer;
+}
+
+function activateComputerPlayer(aiPlayer) {
 	if (COMPUTER_ACTIVE) {
-		aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+		// Calling newgame here to get ship obj positional data
+		newGame();
+		// aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
+		aiPlayer = createAIPlayer();
 		let asteroidX, asteroidY, shipAngle, shipX, shipY;
 		for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
 			// Random positions of asteroids
@@ -159,10 +166,6 @@ function activateComputerPlayer() {
 		// console.table(matrix0.data);
 	}
 }
-// Calling newgame here to get ship obj positional data
-// newGame();
-
-activateComputerPlayer();
 
 // Calculate angle between given coordinates (current and target coordinates)
 function findAngleToPoint(x, y, bearing, targetX, targetY) {
@@ -643,12 +646,15 @@ function handleAsteroidSplit(index) {
 		newLevel();
 	}
 }
+
 //======================
 // ==Update each frame==
 //======================
 function updateCanvas() {
 	// Automation setup
 	if (COMPUTER_ACTIVE) {
+		let aiPlayer = createAIPlayer();
+
 		let asteroidX = currentAsteroidsArray[0].x;
 		let asteroidY = currentAsteroidsArray[0].y;
 		let shipAngle = playerShip.position.angle;
@@ -664,6 +670,14 @@ function updateCanvas() {
 		let differenceRight = (neuralPrediction = Math.abs(
 			neuralPrediction - OUTPUT_VAL_RIGHT
 		));
+
+		if (differenceLeft < OUTPUT_THRESHOLD) {
+			shipRotationLeft(playerShip);
+		} else if (differenceRight > OUTPUT_THRESHOLD) {
+			shipRotationRight(playerShip);
+		} else {
+			playerShip.position.rotation = 0;
+		}
 	}
 
 	// Timer bool: player is losing. If countdown reaches 0, life lost
@@ -1183,6 +1197,12 @@ function updateCanvas() {
 
 	// Animate recursively
 	requestAnimationFrame(updateCanvas);
+}
+
+if (COMPUTER_ACTIVE) {
+	activateComputerPlayer(createAIPlayer());
+
+	handleFirstGameStart();
 }
 
 // Call function when using requestanimationframe
