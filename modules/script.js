@@ -50,7 +50,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = true;
+const COMPUTER_ACTIVE = false;
 const NUM_INPUTS = 3;
 const NUM_HIDDEN = 20;
 // 1 bool output (turn left or right)
@@ -160,7 +160,7 @@ function activateComputerPlayer() {
 	}
 }
 // Calling newgame here to get ship obj positional data
-newGame();
+// newGame();
 
 activateComputerPlayer();
 
@@ -665,6 +665,7 @@ function updateCanvas() {
 			neuralPrediction - OUTPUT_VAL_RIGHT
 		));
 	}
+
 	// Timer bool: player is losing. If countdown reaches 0, life lost
 	let playerLossStateTime = playerShip.deathTimer > 0;
 
@@ -1037,7 +1038,6 @@ function updateCanvas() {
 				//Making contact
 				shot.contactTime--;
 				shot.madeContact = true;
-				console.log('made contact');
 				// Remove shot that makes contact
 				if (shot.contactTime == 0) {
 					playerShip.currentShots.splice(shot, 1);
@@ -1257,7 +1257,6 @@ function handleGameRestart() {
 
 // Moving, rotating ship
 function keyDownAction(event) {
-	console.log(event.keyCode);
 	if (!playerShip.isAlive || COMPUTER_ACTIVE) {
 		return;
 	}
