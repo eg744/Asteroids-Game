@@ -50,7 +50,7 @@ const ASTEROID_POINTS_SMALL = 10;
 const SHOW_COLLISION = false;
 
 // ==Computer player values==
-const COMPUTER_ACTIVE = true;
+const COMPUTER_ACTIVE = false;
 // 3 before
 const NUM_INPUTS = 4;
 const NUM_HIDDEN = 20;
@@ -1108,7 +1108,6 @@ function updateCanvas() {
 	}
 
 	// Player shot movement
-	// for (let i = 0; i < playerShip.currentShots.length; i++) {
 
 	for (let i = playerShip.currentShots.length - 1; i >= 0; i--) {
 		// Remove shots as they exit play area
@@ -1397,11 +1396,11 @@ function keyDownAction(event) {
 			break;
 		// Rotate left
 		case 37:
-			shipRotationLeft(playerShip);
+			rotateShip(false);
 
 			break;
 		case 65:
-			shipRotationLeft(playerShip);
+			rotateShip(false);
 
 			break;
 
@@ -1416,11 +1415,11 @@ function keyDownAction(event) {
 			break;
 		// Rotate right
 		case 39:
-			shipRotationRight(playerShip);
+			rotateShip(true);
 
 			break;
 		case 68:
-			shipRotationRight(playerShip);
+			rotateShip(true);
 
 			break;
 
@@ -1452,6 +1451,7 @@ function rotateShip(right) {
 function keyUpAction(event) {
 	// Stop actions
 	if (!playerShip.isAlive || COMPUTER_ACTIVE) return;
+	console.log(event.keyCode);
 
 	switch (event.keyCode) {
 		case 32:
