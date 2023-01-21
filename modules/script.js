@@ -33,7 +33,7 @@ const PLAYER_SHOT_SPEED_PX = 5;
 const PLAYER_SHOT_CONTACT_TIME = 0.02;
 
 // Default asteroid values
-const ASTEROIDS_NUMBER = 1;
+const ASTEROIDS_NUMBER = 5;
 const ASTEROIDS_SIZE_PX = 100;
 const ASTEROIDS_HEIGHT_PX = 30;
 const ASTEROID_SHAPE_VARIATION = 0.5;
@@ -51,16 +51,19 @@ const SHOW_COLLISION = false;
 
 // ==Computer player values==
 const COMPUTER_ACTIVE = false;
-const NUM_INPUTS = 3;
+// 3 before
+const NUM_INPUTS = 4;
 const NUM_HIDDEN = 20;
 // 1 bool output (turn left or right)
 const NUM_OUTPUTS = 1;
-const NUM_TRAINING_SAMPLES = 500000;
+const NUM_TRAINING_SAMPLES = 900000;
 // Neural outputs for ship turns
 const OUTPUT_VAL_LEFT = 0;
 const OUTPUT_VAL_RIGHT = 1;
 // How close a predicted output must be to commit to movement
-const OUTPUT_THRESHOLD = 0.25;
+const OUTPUT_THRESHOLD = 0.05;
+// Shots/second
+const COMPUTER_RATE_OF_FIRE = 2;
 
 // Game text values
 const TEXT_FADE_TIME = 6;
@@ -93,79 +96,86 @@ let level,
 // ==Computer player functions==
 //==============================
 
+if (COMPUTER_ACTIVE) {
+	// Get ship and asteroid positional data for computer
+	newGame();
+}
+
 function createAIPlayer() {
 	let aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 	return aiPlayer;
 }
 
-function activateComputerPlayer(aiPlayer) {
-	if (COMPUTER_ACTIVE) {
-		// Calling newgame here to get ship obj positional data
-		newGame();
-		// aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
-		aiPlayer = createAIPlayer();
-		let asteroidX, asteroidY, shipAngle, shipX, shipY;
-		for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
-			// Random positions of asteroids
-			// Check off-screen asteroids up to its radius. (subtract radius)
-			asteroidX =
-				Math.random() * (canvas.width + ASTEROIDS_SIZE_PX) -
-				ASTEROIDS_SIZE_PX / 2;
-			asteroidY =
-				Math.random() * (canvas.height + ASTEROIDS_SIZE_PX) -
-				ASTEROIDS_SIZE_PX / 2;
+let aiShotTime = 0;
+let aiPlayer;
+if (COMPUTER_ACTIVE) {
+	aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
-			// Ship position, angle (radians)
-			shipX = playerShip.position.x;
-			shipY = playerShip.position.y;
-			shipAngle = Math.random() * Math.PI * 2;
+	let asteroidX, asteroidY, shipAngle, shipX, shipY;
+	for (let i = 0; i < NUM_TRAINING_SAMPLES; i++) {
+		// Random positions of asteroids
+		// Check off-screen asteroids up to its radius. (subtract radius)
+		asteroidX =
+			Math.random() * (canvas.width + ASTEROIDS_SIZE_PX) -
+			ASTEROIDS_SIZE_PX / 2;
+		asteroidY =
+			Math.random() * (canvas.height + ASTEROIDS_SIZE_PX) -
+			ASTEROIDS_SIZE_PX / 2;
 
-			// Angle to asteroid
-			let angleToAsteroid = findAngleToPoint(
-				shipX,
-				shipY,
-				shipAngle,
+		// Ship position, angle (radians)
+		shipX = playerShip.position.x;
+		shipY = playerShip.position.y;
+		shipAngle = Math.random() * Math.PI * 2;
+
+		// Angle to asteroid
+		let angleToAsteroid = findAngleToPoint(
+			shipX,
+			shipY,
+			shipAngle,
+			asteroidX,
+			asteroidY
+		);
+
+		let decidedTurningDirection =
+			angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
+
+		// console.log(
+		// 	normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
+		// );
+
+		// Train to decide turning direction (normalized values: 0 or 1)
+		// BUG: Getting matricies not dot compatible error when using normalised inputs.
+		aiPlayer.training(
+			normaliseAsteroidsNeuralInputs(
 				asteroidX,
-				asteroidY
-			);
+				asteroidY,
+				angleToAsteroid,
+				shipAngle
+			),
 
-			let decidedTurningDirection =
-				angleToAsteroid > Math.PI ? OUTPUT_VAL_LEFT : OUTPUT_VAL_RIGHT;
+			// [
+			// 	asteroidX,
+			// 	asteroidY,
+			// 	// angleToAsteroid,
+			// 	shipAngle,
+			// ],
+			[decidedTurningDirection]
+		);
 
-			// console.log(
-			// 	normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
-			// );
-
-			// Train to decide turning direction (normalized values: 0 or 1)
-			// BUG: Getting matricies not dot compatible error when using normalised inputs.
-			aiPlayer.training(
-				// [
-				// 	normaliseAsteroidsNeuralInputs(
-				// 		asteroidX,
-				// 		asteroidY,
-				// 		// angleToAsteroid,
-				// 		shipAngle
-				// 	),
-				// ],
-				[
-					asteroidX,
-					asteroidY,
-					// angleToAsteroid,
-					shipAngle,
-				],
-				[decidedTurningDirection]
-			);
-
-			// Output of turn will be 1 or 0 in relation to current position
-		}
-
-		// console.table(aiPlayer.weight0.data);
-		// console.table(aiPlayer.weight1.data);
-		// let matrix0 = new MyMatrix(2, 3, [2, 1, -1], [4, 3, 0]);
-		// matrix0.randomizeWeight();
-		// console.table(matrix0.data);
+		// Output of turn will be 1 or 0 in relation to current position
 	}
 }
+handleFirstGameStart();
+
+// console.table(aiPlayer.weight0.data);
+// console.table(aiPlayer.weight1.data);
+// let matrix0 = new MyMatrix(2, 3, [2, 1, -1], [4, 3, 0]);
+// matrix0.randomizeWeight();
+// console.table(matrix0.data);
+
+// if (COMPUTER_ACTIVE) {
+// 	activateComputerPlayer();
+// }
 
 // Calculate angle between given coordinates (current and target coordinates)
 function findAngleToPoint(x, y, bearing, targetX, targetY) {
@@ -176,6 +186,7 @@ function findAngleToPoint(x, y, bearing, targetX, targetY) {
 	return (difference + Math.PI * 2) % (Math.PI * 2);
 }
 
+// Test function: returns bool for logic inputs
 function neuralNetworkXORTest() {
 	let aiPlayer = new MyNeuralNetwork(NUM_INPUTS, NUM_HIDDEN, NUM_OUTPUTS);
 
@@ -199,7 +210,12 @@ function neuralNetworkXORTest() {
 	console.log(`1 1 = ${aiPlayer.feedForward([1, 1]).data}`);
 }
 
-function normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle) {
+function normaliseAsteroidsNeuralInputs(
+	asteroidX,
+	asteroidY,
+	asteroidAngle,
+	shipAngle
+) {
 	// Values will be 0 or 1
 	let inputs = [];
 	// Asteroid possibly off screen up to radius
@@ -211,7 +227,9 @@ function normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle) {
 		(asteroidY + ASTEROIDS_SIZE_PX / 2) /
 		(canvas.height + ASTEROIDS_SIZE_PX);
 
-	inputs[2] = shipAngle / (Math.PI * 2);
+	inputs[2] = asteroidAngle / (Math.PI * 2);
+
+	inputs[3] = shipAngle / (Math.PI * 2);
 
 	return inputs;
 }
@@ -353,6 +371,7 @@ function newGame() {
 
 	// console.log('asteroids', currentAsteroidsArray);
 }
+
 function newLevel() {
 	gameLevelText = onScreenText(`Level ${level + 1}`, 1.0);
 	createAsteroidsArray();
@@ -417,6 +436,7 @@ function drawPlayerShip(x, y, angle, playerColor = 'white') {
 // ==Shooting==
 //=============
 function playerShot() {
+	// console.log(playerShip.currentShots);
 	if (
 		playerShip.shootingAllowed &&
 		playerShip.currentShots.length < PLAYER_SHOTS_MAX
@@ -435,7 +455,7 @@ function playerShot() {
 			yVelocity:
 				-(PLAYER_SHOT_SPEED_PX * Math.sin(playerShip.position.angle)) /
 				FRAMERATE,
-			rotation: playerShip.position.angle / 360,
+			rotation: playerShip.position.angle / (Math.PI * 2),
 			contactTime: 0,
 			madeContact: false,
 		});
@@ -652,31 +672,100 @@ function handleAsteroidSplit(index) {
 //======================
 function updateCanvas() {
 	// Automation setup
-	if (COMPUTER_ACTIVE) {
-		let aiPlayer = createAIPlayer();
+	if (COMPUTER_ACTIVE && playerShip.isAlive) {
+		let closestObject = 0;
+		let distance0 = asteroidDistanceCalculated(
+			playerShip.position.x,
+			playerShip.position.y,
+			currentAsteroidsArray[0].position.x,
+			currentAsteroidsArray[0].position.y
+		);
 
-		let asteroidX = currentAsteroidsArray[0].x;
-		let asteroidY = currentAsteroidsArray[0].y;
+		for (let i = 1; i < currentAsteroidsArray.length; i++) {
+			let distance1 = asteroidDistanceCalculated(
+				playerShip.position.x,
+
+				playerShip.position.y,
+				currentAsteroidsArray[i].position.x,
+				currentAsteroidsArray[i].position.y
+			);
+			if (distance1 < distance0) {
+				distance0 = distance1;
+				closestObject = i;
+			}
+		}
+
+		// make a prediction based on current data
+
+		let asteroidX = currentAsteroidsArray[closestObject].position.x;
+		let asteroidY = currentAsteroidsArray[closestObject].position.y;
 		let shipAngle = playerShip.position.angle;
+		let shipX = playerShip.position.x;
+		let shipY = playerShip.position.y;
+		// console.log(shipX, shipY, shipAngle, asteroidX, asteroidY);
+		let betweenAngle = findAngleToPoint(
+			shipX,
+			shipY,
+			shipAngle,
+			asteroidX,
+			asteroidY
+		);
+		// console.log(betweenAngle);
+
+		// ========================stopped here
+		// let predict = aiPlayer.feedForward(
+		// 	normaliseInput(asteroidX, asteroidY, betweenAngle, shipAngle)
+		// ).data[0][0];
 
 		let neuralPrediction = aiPlayer.feedForward(
-			normaliseAsteroidsNeuralInputs(asteroidX, asteroidY, shipAngle)
+			normaliseAsteroidsNeuralInputs(
+				asteroidX,
+				asteroidY,
+				betweenAngle,
+				shipAngle
+			)
 		).data[0][0];
+		// console.log(shipAngle);
+		// console.log(neuralPrediction);
 
 		// Computer's turning decision
-		let differenceLeft = (neuralPrediction = Math.abs(
-			neuralPrediction - OUTPUT_VAL_LEFT
-		));
-		let differenceRight = (neuralPrediction = Math.abs(
-			neuralPrediction - OUTPUT_VAL_RIGHT
-		));
+		let differenceLeft = Math.abs(neuralPrediction - OUTPUT_VAL_LEFT);
+		let differenceRight = Math.abs(neuralPrediction - OUTPUT_VAL_RIGHT);
+		// console.log(differenceLeft, differenceRight);
+
+		// if (differenceLeft < OUTPUT_THRESHOLD) {
+		// 	shipRotationLeft(playerShip);
+		// } else if (differenceRight > OUTPUT_THRESHOLD) {
+		// 	shipRotationRight(playerShip);
+		// } else {
+		// 	playerShip.position.rotation = 0;
+		// }
 
 		if (differenceLeft < OUTPUT_THRESHOLD) {
-			shipRotationLeft(playerShip);
+			rotateShip(false);
+			// console.log('left');
 		} else if (differenceRight > OUTPUT_THRESHOLD) {
-			shipRotationRight(playerShip);
+			rotateShip(true);
+			// console.log('right');
 		} else {
 			playerShip.position.rotation = 0;
+		}
+		aiShooting();
+		// console.log(playerShip.currentShots);
+
+		// if (playerShip.currentShots.x == 'undefined') {
+		// 	console.log(playerShip.currentShots);
+		// }
+	}
+
+	function aiShooting() {
+		if (aiShotTime == 0) {
+			// Shoot once every 6 frames at 60fps
+			aiShotTime = Math.ceil(FRAMERATE / COMPUTER_RATE_OF_FIRE);
+			playerShip.shootingAllowed = true;
+			playerShot();
+		} else {
+			aiShotTime--;
 		}
 	}
 
@@ -892,6 +981,16 @@ function updateCanvas() {
 		// Rotate ship
 		playerShip.position.angle += playerShip.position.rotation;
 
+		// keep the angle between 0 and 360
+		if (playerShip.position.angle < 0) {
+			playerShip.position.angle += Math.PI * 2;
+		} else if (playerShip.position.angle >= Math.PI * 2) {
+			playerShip.position.angle -= Math.PI * 2;
+		}
+		// console.log(playerShip.position.angle, playerShip.position.rotation);
+
+		// console.log(playerShip.position.angle);
+
 		// Ship thrust state
 		if (
 			playerShip.shipThrusting &&
@@ -1009,17 +1108,24 @@ function updateCanvas() {
 	}
 
 	// Player shot movement
-	// for (let i = 0; i < playerShip.currentShots.length; i++) {
+
 	for (let i = playerShip.currentShots.length - 1; i >= 0; i--) {
 		// Remove shots as they exit play area
+		// Breaks here sometimes when computer plays, shots[i].x undefined. edge of screen?
+		console.log(playerShip.currentShots[i].x);
+
 		if (
 			playerShip.currentShots[i].x < 0 ||
-			playerShip.currentShots[i].x > canvas.width
+			// playerShip.currentShots[i].x >= canvas.width
+			playerShip.currentShots[i].x >=
+				canvas.width + ASTEROIDS_SIZE_PX * (Math.PI * 2)
 		) {
 			playerShip.currentShots.splice(i, 1);
 		} else if (
 			playerShip.currentShots[i].y < 0 ||
-			playerShip.currentShots[i].y > canvas.height
+			// playerShip.currentShots[i].y >= canvas.height
+			playerShip.currentShots[i].y >=
+				canvas.width + ASTEROIDS_SIZE_PX * (Math.PI * 2)
 		) {
 			playerShip.currentShots.splice(i, 1);
 		}
@@ -1199,11 +1305,11 @@ function updateCanvas() {
 	requestAnimationFrame(updateCanvas);
 }
 
-if (COMPUTER_ACTIVE) {
-	activateComputerPlayer(createAIPlayer());
+// if (COMPUTER_ACTIVE) {
+// 	activateComputerPlayer(createAIPlayer());
 
-	handleFirstGameStart();
-}
+// 	handleFirstGameStart();
+// }
 
 // Call function when using requestanimationframe
 
@@ -1290,11 +1396,11 @@ function keyDownAction(event) {
 			break;
 		// Rotate left
 		case 37:
-			shipRotationLeft(playerShip);
+			rotateShip(false);
 
 			break;
 		case 65:
-			shipRotationLeft(playerShip);
+			rotateShip(false);
 
 			break;
 
@@ -1309,11 +1415,11 @@ function keyDownAction(event) {
 			break;
 		// Rotate right
 		case 39:
-			shipRotationRight(playerShip);
+			rotateShip(true);
 
 			break;
 		case 68:
-			shipRotationRight(playerShip);
+			rotateShip(true);
 
 			break;
 
@@ -1327,16 +1433,25 @@ function keyDownAction(event) {
 			break;
 	}
 }
-function shipRotationLeft(ship) {
-	ship.position.rotation = ((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
-}
-function shipRotationRight(ship) {
-	ship.position.rotation = ((-SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE;
+// function shipRotationLeft(ship) {
+// 	ship.position.rotation =
+// 		(((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE) * 1;
+// }
+// function shipRotationRight(ship) {
+// 	ship.position.rotation =
+// 		(((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE) * -1;
+// }
+
+function rotateShip(right) {
+	let sign = right ? -1 : 1;
+	playerShip.position.rotation =
+		(((SHIP_TURN_SPEED / 180) * Math.PI) / FRAMERATE) * sign;
 }
 
 function keyUpAction(event) {
 	// Stop actions
 	if (!playerShip.isAlive || COMPUTER_ACTIVE) return;
+	console.log(event.keyCode);
 
 	switch (event.keyCode) {
 		case 32:
