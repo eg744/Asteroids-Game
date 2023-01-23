@@ -13,3 +13,5 @@ Simple Neural Network included as an option to play the game automatically. Take
 I enjoyed learning some of the basics of machine learning, and a good way to exercise my knowledge of Object Oriented Programming. It's not my area of expertise but it was interesting. I'll continue iterating on it in the future. 
 
 Known issue with computer player: Ship's bullet coordinates are undefined when colliding with asteroid on the edge of the play area. 
+Implementing simple Neural Network as an option to play the game automatically when COMPUTER_ACTIVE bool is true. 
+Neural network takes number of inputs, number of hidden values and number of expected outputs. Matrix methods throw errors if the given arguments are invalid. Currently produces output of 0 or 1 signifying turning the player's ship left or right. 
