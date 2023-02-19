@@ -2,11 +2,12 @@
 
 Asteroids game clone with HTML5 Canvas, Javascript
 
-Control with arrow keys or WAD, shoot with spacebar, S, or arrow down.
+- Control with arrow keys or WAD
+- shoot with spacebar, S, or arrow down.
 
-High score saved with Local Storage
+- High score saved with Local Storage
 
-Live site at https://eg744.github.io/Asteroids-Game/
+- Live site at https://eg744.github.io/Asteroids-Game/
 
 Simple Neural Network included as an option to play the game automatically when COMPUTER_ACTIVE bool is true. 
 
